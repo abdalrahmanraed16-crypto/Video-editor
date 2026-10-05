@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
 <title>Video Editor</title>
 <style>
   :root{
@@ -10,23 +11,27 @@
     --text:#e8ebf2; --muted:#8b93a7; --accent:#6c5ce7; --accent2:#a29bfe;
     --clip:#3b82f6; --clipText:#f59e0b; --clipAudio:#10b981;
     --ai1:#8b5cf6; --ai2:#ec4899; --ai3:#06b6d4;
+    --left-w:290px; --right-w:300px; --timeline-h:236px;
+    --safe-top:env(safe-area-inset-top, 0px);
+    --safe-bot:env(safe-area-inset-bottom, 0px);
+    --safe-l:env(safe-area-inset-left, 0px);
+    --safe-r:env(safe-area-inset-right, 0px);
   }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0}
-  body{
-    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg);color:var(--text);overflow:hidden;font-size:14px;
-  }
-  #app{display:flex;flex-direction:column;height:100vh}
-
-  #topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;
-    background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0}
-  .brand{font-weight:800;letter-spacing:.4px;font-size:15px}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+  body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;
+    padding:var(--safe-top) var(--safe-r) var(--safe-bot) var(--safe-l);}
+  #app{display:flex;flex-direction:column;height:100%}
+  #topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;
+    background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;min-height:52px}
+  .brand{font-weight:800;letter-spacing:.4px;font-size:14px;white-space:nowrap}
   .brand span{color:var(--accent2)}
-  .spacer{flex:1}
+  .spacer{flex:1;min-width:0}
   .btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);
-    border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;
-    transition:.15s}
+    border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:600;
+    transition:.15s;white-space:nowrap;display:inline-flex;align-items:center;
+    gap:5px;justify-content:center;min-height:36px}
   .btn:hover{background:#242b3d}
   .btn.primary{background:var(--accent);border-color:var(--accent)}
   .btn.primary:hover{background:#5b4bd6}
@@ -36,46 +41,53 @@
   @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,41,87,.7)}
     50%{box-shadow:0 0 0 8px rgba(255,41,87,0)}}
   .btn:disabled{opacity:.5;cursor:not-allowed}
-  .btn.sm{padding:5px 10px;font-size:12px}
-  .btn.ai{background:linear-gradient(135deg,var(--ai1),var(--ai2));
-    border:none;color:#fff}
+  .btn.sm{padding:5px 10px;font-size:12px;min-height:32px}
+  .btn.ai{background:linear-gradient(135deg,var(--ai1),var(--ai2));border:none;color:#fff}
   .btn.ai:hover{filter:brightness(1.1)}
-  #timeReadout{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;
-    font-weight:600;padding:0 6px}
+  .btn.icon{padding:0;width:38px;min-height:38px}
+  .btn .lbl{display:inline}
+  #timeReadout{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px;
+    font-weight:600;padding:0 6px;white-space:nowrap}
+  #panelToggleLeft, #panelToggleRight {display:none}
 
-  #body{display:flex;flex:1;min-height:0}
-  #left{width:290px;background:var(--panel);border-right:1px solid var(--line);
-    display:flex;flex-direction:column;min-height:0;flex-shrink:0}
-  #right{width:300px;background:var(--panel);border-left:1px solid var(--line);
-    padding:14px;overflow-y:auto;flex-shrink:0}
+  #body{display:flex;flex:1;min-height:0;position:relative}
+  #left{width:var(--left-w);background:var(--panel);
+    border-right:1px solid var(--line);display:flex;flex-direction:column;
+    min-height:0;flex-shrink:0;z-index:40}
+  .panelTabs{display:flex;border-bottom:1px solid var(--line);flex-shrink:0;
+    overflow-x:auto;scrollbar-width:none}
+  .panelTabs::-webkit-scrollbar{display:none}
+  .tab{flex:1;background:none;border:none;color:var(--muted);padding:11px 0;
+    cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.4px;
+    border-bottom:2px solid transparent;white-space:nowrap;min-width:52px}
+  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .tab.aiTab.active{border-bottom-color:var(--ai2)}
+  .tab.aiTab{color:#a78bfa}
+  .tabPane{padding:12px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+  .tabPane.hidden{display:none}
+  #right{width:var(--right-w);background:var(--panel);
+    border-left:1px solid var(--line);padding:14px;overflow-y:auto;
+    flex-shrink:0;z-index:40;-webkit-overflow-scrolling:touch}
   #right h3{margin:0 0 12px;font-size:12px;text-transform:uppercase;
     letter-spacing:.8px;color:var(--muted)}
-  #stage{flex:1;display:flex;flex-direction:column;min-width:0;background:#0b0d13}
+  #stage{flex:1;display:flex;flex-direction:column;min-width:0;background:#0b0d13;min-height:0}
   #previewWrap{flex:1;display:flex;align-items:center;justify-content:center;
-    padding:18px;min-height:0}
+    padding:14px;min-height:0;min-width:0;overflow:hidden}
   #preview{max-width:100%;max-height:100%;width:auto;height:auto;background:#000;
-    border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.6)}
-  #transport{display:flex;align-items:center;justify-content:center;gap:12px;
-    padding:10px;background:var(--panel);border-top:1px solid var(--line)}
+    border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.6);
+    aspect-ratio:16/9;object-fit:contain}
+  #transport{display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:8px;background:var(--panel);border-top:1px solid var(--line);flex-shrink:0}
   #transport button{background:var(--panel2);border:1px solid var(--line);
-    color:var(--text);border-radius:8px;width:38px;height:34px;cursor:pointer;
-    font-size:14px;display:grid;place-items:center}
+    color:var(--text);border-radius:8px;width:40px;height:38px;cursor:pointer;
+    font-size:14px;display:grid;place-items:center;min-width:40px}
   #transport button:hover{background:#242b3d}
-  #playBtn{width:52px!important;background:var(--accent)!important;
+  #playBtn{width:56px!important;background:var(--accent)!important;
     border-color:var(--accent)!important;font-size:16px!important}
   #timecode{font-variant-numeric:tabular-nums;font-weight:700;font-size:13px;
     min-width:74px;text-align:center}
 
-  .panelTabs{display:flex;border-bottom:1px solid var(--line);flex-shrink:0}
-  .tab{flex:1;background:none;border:none;color:var(--muted);padding:12px 0;
-    cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.4px;
-    border-bottom:2px solid transparent}
-  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
-  .tab.aiTab.active{border-bottom-color:var(--ai2)}
-  .tab.aiTab{color:#a78bfa}
-  .tabPane{padding:12px;overflow-y:auto;flex:1;min-height:0}
-  .tabPane.hidden{display:none}
-  #dropzone{border:1.5px dashed var(--line);border-radius:10px;padding:18px 10px;
+  #dropzone{border:1.5px dashed var(--line);border-radius:10px;padding:16px 10px;
     text-align:center;color:var(--muted);font-size:12px;cursor:pointer;
     margin-bottom:12px;transition:.15s}
   #dropzone:hover,#dropzone.over{border-color:var(--accent);color:var(--accent2);
@@ -83,7 +95,8 @@
   .mediaItem{display:flex;gap:9px;align-items:center;padding:7px;border-radius:8px;
     cursor:pointer;margin-bottom:6px;border:1px solid transparent}
   .mediaItem:hover{background:var(--panel2);border-color:var(--line)}
-  .thumb{width:64px;height:38px;border-radius:5px;background:#000 center/cover
+  .mediaItem:active{background:#242b3d}
+  .thumb{width:60px;height:36px;border-radius:5px;background:#000 center/cover
     no-repeat;flex-shrink:0;display:grid;place-items:center;font-size:15px;color:#666}
   .mediaItem .meta{min-width:0;flex:1}
   .mediaItem .name{font-size:12px;font-weight:600;white-space:nowrap;
@@ -98,9 +111,9 @@
   .presetBtn small{display:block;font-weight:400;color:var(--muted);margin-top:2px}
   .actionBtn{width:100%;text-align:center;
     background:linear-gradient(135deg,#6c5ce7,#a29bfe);
-    border:none;color:#fff;border-radius:10px;padding:16px;cursor:pointer;
+    border:none;color:#fff;border-radius:10px;padding:14px;cursor:pointer;
     font-weight:800;font-size:14px;letter-spacing:.3px;margin-bottom:12px;
-    transition:.15s;box-shadow:0 4px 14px rgba(108,92,231,.35)}
+    transition:.15s;box-shadow:0 4px 14px rgba(108,92,231,.35);min-height:48px}
   .actionBtn:hover{transform:translateY(-1px)}
 
   .fxSectionTitle{font-size:11px;text-transform:uppercase;letter-spacing:.7px;
@@ -109,34 +122,33 @@
   .kitBtn{background:var(--panel2);border:1px solid var(--line);color:var(--text);
     border-radius:8px;padding:8px;cursor:pointer;font-size:11px;text-align:left;
     transition:.15s;font-weight:700;line-height:1.3}
-  .kitBtn:hover{border-color:var(--accent);background:#242b3d;transform:translateY(-1px)}
+  .kitBtn:hover{border-color:var(--accent);background:#242b3d}
   .kitBtn .kitIcon{font-size:16px;display:block;margin-bottom:2px}
   .kitBtn small{display:block;font-size:9px;color:var(--muted);font-weight:400;
     margin-top:2px;line-height:1.2}
   .fxBtn{background:var(--panel2);border:1px solid var(--line);color:var(--text);
     border-radius:8px;padding:8px 4px;cursor:pointer;font-size:10px;text-align:center;
-    transition:.15s;font-weight:600}
+    transition:.15s;font-weight:600;min-height:54px}
   .fxBtn:hover{border-color:var(--accent);background:#242b3d}
   .fxBtn .fxIcon{font-size:16px;display:block;margin-bottom:2px}
   .fxBtn.active{border-color:var(--accent);background:rgba(108,92,231,.22)}
-
   .fxRow{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
     padding:6px 8px;margin-bottom:5px;font-size:11px}
   .fxRowHead{display:flex;justify-content:space-between;align-items:center;
     margin-bottom:4px;font-weight:700;font-size:11px}
   .fxRowHead button{background:none;border:none;color:var(--muted);cursor:pointer;
-    font-size:14px;line-height:1;padding:0 4px}
+    font-size:18px;line-height:1;padding:0 6px}
   .fxRowHead button:hover{color:#ff6b6b}
-  .fxRow input[type=range]{width:100%;accent-color:var(--accent);height:4px}
+  .fxRow input[type=range]{width:100%;accent-color:var(--accent);height:6px}
   .fxHint{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5}
 
   #props label{display:block;font-size:11px;color:var(--muted);font-weight:700;
     text-transform:uppercase;letter-spacing:.5px;margin:12px 0 5px}
   #props input[type=text],#props input[type=number],#props textarea,#props select{
     width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
-    border-radius:7px;padding:8px;font-size:13px;font-family:inherit}
-  #props input[type=range]{width:100%;accent-color:var(--accent)}
-  #props input[type=color]{width:100%;height:34px;background:var(--panel2);
+    border-radius:7px;padding:9px;font-size:13px;font-family:inherit;min-height:38px}
+  #props input[type=range]{width:100%;accent-color:var(--accent);height:6px}
+  #props input[type=color]{width:100%;height:38px;background:var(--panel2);
     border:1px solid var(--line);border-radius:7px;cursor:pointer;padding:2px}
   #props .two{display:flex;gap:8px}
   #props .two>div{flex:1}
@@ -144,11 +156,8 @@
   .infoLine{font-size:11px;color:var(--muted);margin-top:14px;padding-top:12px;
     border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
 
-  /* AI Studio */
-  .aiHeader{
-    background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(236,72,153,.14));
-    border:1px solid rgba(139,92,246,.35);border-radius:10px;padding:10px 12px;
-    margin-bottom:12px}
+  .aiHeader{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(236,72,153,.14));
+    border:1px solid rgba(139,92,246,.35);border-radius:10px;padding:10px 12px;margin-bottom:12px}
   .aiHeader h3{margin:0 0 2px;font-size:13px;
     background:linear-gradient(90deg,var(--ai1),var(--ai2));
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
@@ -158,35 +167,31 @@
     color:var(--text);border-radius:8px;padding:9px;font-size:12px;font-family:inherit;
     resize:vertical;min-height:52px}
   #aiPrompt:focus{outline:none;border-color:var(--ai1)}
-
   .smartToggle{display:flex;align-items:center;gap:8px;margin:8px 0 10px;
     padding:8px 10px;background:linear-gradient(135deg,rgba(6,182,212,.12),rgba(139,92,246,.10));
     border:1px solid rgba(6,182,212,.3);border-radius:8px;cursor:pointer}
-  .smartToggle input{accent-color:var(--ai3);width:16px;height:16px;cursor:pointer}
+  .smartToggle input{accent-color:var(--ai3);width:18px;height:18px;cursor:pointer}
   .smartToggle .stLabel{font-size:11px;font-weight:700;color:#7dd3fc;
     letter-spacing:.3px;flex:1}
   .smartToggle .stSub{font-size:10px;color:var(--muted);font-weight:500;
     display:block;margin-top:1px}
-
   #aiSearchPanel{margin:8px 0;border:1px solid var(--line);border-radius:8px;
     overflow:hidden;display:none}
   #aiSearchPanel.show{display:block}
   .srHead{display:flex;justify-content:space-between;align-items:center;
-    padding:7px 10px;background:var(--panel2);cursor:pointer;
+    padding:8px 10px;background:var(--panel2);cursor:pointer;
     border-bottom:1px solid var(--line);font-size:11px;font-weight:800;
     letter-spacing:.4px;color:#7dd3fc}
   .srHead .srCount{color:var(--muted);font-weight:600;font-size:10px}
-  .srBody{padding:10px;background:#0d1017;max-height:340px;overflow-y:auto}
+  .srBody{padding:10px;background:#0d1017;max-height:340px;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .srBody.hidden{display:none}
   .srTitle{font-size:12px;font-weight:800;color:#fff;margin-bottom:4px}
   .srTitle a{color:#7dd3fc;text-decoration:none}
-  .srTitle a:hover{text-decoration:underline}
   .srSummary{font-size:11px;color:#c4cbd8;line-height:1.5;margin-bottom:8px}
-  .srSummary.hidden{display:none}
   .srKeywords{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
-  .srKeyword{background:rgba(6,182,212,.16);color:#7dd3fc;border:1px solid rgba(6,182,212,.3);
-    font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;
-    text-transform:uppercase;letter-spacing:.4px}
+  .srKeyword{background:rgba(6,182,212,.16);color:#7dd3fc;
+    border:1px solid rgba(6,182,212,.3);font-size:9px;font-weight:700;
+    padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px}
   .srSectionLabel{font-size:9px;font-weight:800;color:var(--muted);
     text-transform:uppercase;letter-spacing:.6px;margin:8px 0 5px}
   .srImagesGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
@@ -204,7 +209,7 @@
   @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
   .srRelated{display:flex;flex-wrap:wrap;gap:4px}
   .srRelatedChip{background:var(--panel2);border:1px solid var(--line);
-    font-size:10px;color:#c4cbd8;padding:3px 8px;border-radius:10px;cursor:pointer;
+    font-size:10px;color:#c4cbd8;padding:4px 9px;border-radius:10px;cursor:pointer;
     transition:.15s}
   .srRelatedChip:hover{background:#242b3d;color:#fff;border-color:var(--ai3)}
   .srEmpty{font-size:11px;color:var(--muted);padding:8px 0;text-align:center}
@@ -212,7 +217,7 @@
   .aiTypeGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
   .aiTypeBtn{background:var(--panel2);border:1px solid var(--line);color:var(--text);
     border-radius:8px;padding:9px 6px;cursor:pointer;font-size:11px;font-weight:700;
-    text-align:center;transition:.15s}
+    text-align:center;transition:.15s;min-height:56px}
   .aiTypeBtn:hover{border-color:var(--ai1);background:#242b3d}
   .aiTypeBtn.active{background:linear-gradient(135deg,rgba(139,92,246,.35),rgba(236,72,153,.25));
     border-color:var(--ai2);color:#fff}
@@ -222,19 +227,18 @@
     text-transform:uppercase;letter-spacing:.4px;flex-shrink:0}
   .aiRow select,.aiRow input[type=number]{
     flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);
-    border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit}
+    border-radius:6px;padding:8px;font-size:12px;font-family:inherit;min-height:38px}
   .aiBtnRow{display:flex;gap:6px;margin-top:6px}
   .aiGenBtn{flex:1;text-align:center;
     background:linear-gradient(135deg,var(--ai1),var(--ai2),var(--ai3));
-    background-size:200% 200%;
-    border:none;color:#fff;border-radius:10px;padding:13px;cursor:pointer;
-    font-weight:800;font-size:13px;letter-spacing:.4px;
+    background-size:200% 200%;border:none;color:#fff;border-radius:10px;
+    padding:13px;cursor:pointer;font-weight:800;font-size:13px;letter-spacing:.4px;
     transition:.15s;box-shadow:0 4px 16px rgba(139,92,246,.4);
-    animation:aiShift 6s ease infinite}
+    animation:aiShift 6s ease infinite;min-height:48px}
   .aiSearchBtn{background:linear-gradient(135deg,var(--ai3),#0891b2);
     border:none;color:#fff;border-radius:10px;padding:13px 16px;cursor:pointer;
     font-weight:800;font-size:13px;transition:.15s;
-    box-shadow:0 4px 16px rgba(6,182,212,.35)}
+    box-shadow:0 4px 16px rgba(6,182,212,.35);min-height:48px}
   .aiSearchBtn:hover{filter:brightness(1.1)}
   .aiSearchBtn:disabled{opacity:.55;cursor:not-allowed}
   @keyframes aiShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
@@ -254,38 +258,39 @@
   .aiExamples{margin-top:12px;font-size:11px;color:var(--muted)}
   .aiExamples b{color:var(--text);font-weight:700;display:block;margin-bottom:6px}
   .aiExChip{display:inline-block;background:var(--panel2);border:1px solid var(--line);
-    border-radius:12px;padding:4px 9px;margin:0 4px 4px 0;cursor:pointer;
+    border-radius:12px;padding:5px 10px;margin:0 4px 4px 0;cursor:pointer;
     font-size:10px;color:var(--muted);transition:.15s}
   .aiExChip:hover{background:#242b3d;color:#fff;border-color:var(--ai1)}
-
   .aiSettings{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
   .aiSettings summary{cursor:pointer;font-size:11px;color:var(--muted);font-weight:700;
     text-transform:uppercase;letter-spacing:.5px;user-select:none;list-style:none;
-    display:flex;align-items:center;gap:6px}
+    display:flex;align-items:center;gap:6px;padding:6px 0}
   .aiSettings summary::-webkit-details-marker{display:none}
   .aiSettings summary::before{content:'▸';transition:.2s;display:inline-block}
   .aiSettings[open] summary::before{transform:rotate(90deg)}
   .aiSettings .keyField{margin-top:10px}
   .aiSettings input[type=text],.aiSettings input[type=password]{
     width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
-    border-radius:6px;padding:7px;font-size:11px;font-family:monospace}
+    border-radius:6px;padding:8px;font-size:11px;font-family:monospace;min-height:36px}
   .aiSettings small{display:block;font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4}
   .apiToggle{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;
     color:var(--muted);font-weight:600}
-  .apiToggle input{accent-color:var(--ai1)}
+  .apiToggle input{accent-color:var(--ai1);width:18px;height:18px}
 
-  #timeline{height:236px;background:var(--panel);border-top:1px solid var(--line);
-    display:flex;flex-direction:column;flex-shrink:0}
-  #tlToolbar{display:flex;align-items:center;gap:8px;padding:7px 12px;
-    border-bottom:1px solid var(--line);flex-shrink:0}
-  #zoomLabel{font-size:11px;color:var(--muted);min-width:42px;text-align:center;font-weight:600}
+  #timeline{height:var(--timeline-h);background:var(--panel);
+    border-top:1px solid var(--line);display:flex;flex-direction:column;
+    flex-shrink:0;min-height:120px}
+  #tlToolbar{display:flex;align-items:center;gap:6px;padding:6px 10px;
+    border-bottom:1px solid var(--line);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+  #tlToolbar::-webkit-scrollbar{display:none}
+  #zoomLabel{font-size:11px;color:var(--muted);min-width:40px;text-align:center;font-weight:600}
   #tlBody{flex:1;display:flex;min-height:0}
-  #trackLabels{width:78px;flex-shrink:0;border-right:1px solid var(--line);
+  #trackLabels{width:64px;flex-shrink:0;border-right:1px solid var(--line);
     background:var(--panel);padding-top:24px}
-  .trackLabel{display:flex;align-items:center;justify-content:center;font-size:10px;
+  .trackLabel{display:flex;align-items:center;justify-content:center;font-size:9px;
     font-weight:800;letter-spacing:.7px;color:var(--muted);text-transform:uppercase;
     border-bottom:1px solid var(--line)}
-  #lanesScroll{flex:1;overflow-x:auto;overflow-y:hidden;position:relative}
+  #lanesScroll{flex:1;overflow-x:auto;overflow-y:hidden;position:relative;-webkit-overflow-scrolling:touch}
   #lanes{position:relative;min-width:100%;height:100%}
   #ruler{height:24px;position:relative;border-bottom:1px solid var(--line);
     background:var(--panel2);cursor:pointer;user-select:none}
@@ -304,7 +309,7 @@
   .clip .clipLabel{font-size:11px;font-weight:700;padding:0 12px;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;pointer-events:none;position:relative;
     z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-  .clip .handle{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;
+  .clip .handle{position:absolute;top:0;bottom:0;width:14px;cursor:ew-resize;
     background:rgba(0,0,0,.3);z-index:2}
   .clip .handle:hover{background:rgba(255,255,255,.35)}
   .clip .handle.left{left:0}
@@ -313,14 +318,14 @@
   .clip.audio{background:var(--clipAudio)}
   .clip.ai{box-shadow:inset 0 0 0 2px var(--ai2)}
   .clip.search{box-shadow:inset 0 0 0 2px var(--ai3)}
-  .clip .fxBadge{position:absolute;top:3px;right:14px;background:rgba(108,92,231,.9);
+  .clip .fxBadge{position:absolute;top:3px;right:18px;background:rgba(108,92,231,.9);
     color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;
     pointer-events:none;z-index:3}
-  .clip .aiBadge{position:absolute;top:3px;left:14px;
+  .clip .aiBadge{position:absolute;top:3px;left:18px;
     background:linear-gradient(135deg,var(--ai1),var(--ai2));
     color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;
     pointer-events:none;z-index:3}
-  .clip .searchBadge{position:absolute;top:3px;left:14px;
+  .clip .searchBadge{position:absolute;top:3px;left:18px;
     background:linear-gradient(135deg,var(--ai3),#0891b2);
     color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;
     pointer-events:none;z-index:3}
@@ -328,54 +333,166 @@
     pointer-events:none;z-index:6;box-shadow:0 0 8px rgba(255,77,109,.7)}
   #playhead::before{content:'';position:absolute;top:0;left:-5px;width:12px;
     height:12px;background:#ff4d6d;border-radius:0 0 6px 6px}
-  ::-webkit-scrollbar{height:10px;width:10px}
+  ::-webkit-scrollbar{height:8px;width:8px}
   ::-webkit-scrollbar-track{background:var(--panel)}
   ::-webkit-scrollbar-thumb{background:#2e3648;border-radius:6px}
   ::-webkit-scrollbar-thumb:hover{background:#3b465c}
 
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;
-    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:10px}
   .modal.hidden{display:none}
   .modalContent{background:var(--panel);border:1px solid var(--line);border-radius:12px;
-    padding:16px;width:min(92vw,1100px);max-height:92vh;display:flex;flex-direction:column;
-    box-shadow:0 20px 60px rgba(0,0,0,.6)}
-  .modalHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  .modalHeader h2{margin:0;font-size:16px}
+    padding:12px;width:min(96vw,1100px);max-height:96vh;display:flex;
+    flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .modalHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .modalHeader h2{margin:0;font-size:15px}
   .modalHeader button{background:none;border:none;color:var(--muted);cursor:pointer;
-    font-size:24px;line-height:1;padding:0 6px}
+    font-size:26px;line-height:1;padding:0 6px}
   .modalHeader button:hover{color:#fff}
-  #drawCanvas{width:100%;height:auto;background:
-    repeating-conic-gradient(#2a2f3d 0% 25%, #232838 0% 50%) 50% / 24px 24px;
-    border-radius:8px;cursor:crosshair;touch-action:none;border:1px solid var(--line)}
-  .drawToolbar{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-  .drawToolbar input[type=color]{width:44px;height:36px;background:var(--panel2);
+  #drawCanvas{width:100%;height:auto;max-height:65vh;
+    background:repeating-conic-gradient(#2a2f3d 0% 25%, #232838 0% 50%) 50% / 24px 24px;
+    border-radius:8px;cursor:crosshair;touch-action:none;border:1px solid var(--line);
+    object-fit:contain}
+  .drawToolbar{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .drawToolbar input[type=color]{width:44px;height:38px;background:var(--panel2);
     border:1px solid var(--line);border-radius:7px;cursor:pointer;padding:2px}
-  .drawToolbar input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+  .drawToolbar input[type=range]{flex:1;min-width:100px;accent-color:var(--accent);height:6px}
   .drawToolbar button{background:var(--panel2);border:1px solid var(--line);
-    color:var(--text);border-radius:8px;padding:8px 14px;cursor:pointer;
-    font-weight:600;font-size:13px}
+    color:var(--text);border-radius:8px;padding:9px 12px;cursor:pointer;
+    font-weight:600;font-size:13px;min-height:40px}
   .drawToolbar button:hover{background:#242b3d}
   .drawToolbar button.active{background:var(--accent);border-color:var(--accent);color:#fff}
   .drawToolbar button.primary{background:var(--accent);border-color:var(--accent)}
-  .drawToolbar .brushPreview{width:34px;height:34px;border-radius:50%;
+  .drawToolbar .brushPreview{width:38px;height:38px;border-radius:50%;
     background:#000;border:2px solid var(--line);display:grid;place-items:center;flex-shrink:0}
   .drawToolbar .brushPreview span{border-radius:50%;background:#fff;display:block}
   .drawToolbar label{font-size:11px;color:var(--muted);font-weight:700;
     text-transform:uppercase;letter-spacing:.5px}
+
+  /* ---- Export modal ---- */
+  #exportModal .modalContent{width:min(94vw,520px)}
+  .fmtOption{display:flex;gap:12px;align-items:flex-start;padding:14px;
+    border:1.5px solid var(--line);border-radius:10px;cursor:pointer;margin-bottom:10px;
+    transition:.15s;background:var(--panel2)}
+  .fmtOption:hover{border-color:var(--accent);background:#242b3d}
+  .fmtOption.selected{border-color:var(--accent);background:rgba(108,92,231,.15)}
+  .fmtIcon{font-size:26px;line-height:1;flex-shrink:0}
+  .fmtInfo{flex:1;min-width:0}
+  .fmtName{font-weight:800;font-size:14px;margin-bottom:3px;display:flex;
+    align-items:center;gap:8px}
+  .fmtBadge{font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;
+    letter-spacing:.4px}
+  .fmtBadge.fast{background:rgba(16,185,129,.2);color:#10b981}
+  .fmtBadge.universal{background:rgba(139,92,246,.25);color:#a78bfa}
+  .fmtDesc{font-size:11px;color:var(--muted);line-height:1.5}
+
+  #exportProgress{display:none;margin-top:14px}
+  #exportProgress.show{display:block}
+  .epStep{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;
+    display:flex;justify-content:space-between;align-items:center}
+  .epStep.active{color:var(--text)}
+  .epStep.done{color:#10b981}
+  .epBar{height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-bottom:10px}
+  .epBarFill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:width .2s}
+
+  #drawerBackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+    z-index:39;backdrop-filter:blur(2px)}
+  #drawerBackdrop.show{display:block}
+
+  @media (max-width: 1100px){
+    :root{ --left-w:250px; --right-w:270px; --timeline-h:220px; }
+    #previewWrap{padding:10px}
+  }
+  @media (max-width: 900px){
+    :root{ --left-w:280px; --right-w:320px; --timeline-h:200px; }
+    #panelToggleRight{display:inline-flex}
+    #right{position:fixed;top:0;bottom:0;right:0;width:var(--right-w);
+      transform:translateX(100%);transition:transform .25s ease;
+      box-shadow:-10px 0 30px rgba(0,0,0,.5);padding-top:calc(14px + var(--safe-top));
+      padding-bottom:calc(14px + var(--safe-bot));z-index:41}
+    #right.open{transform:translateX(0)}
+    .brand{font-size:13px}
+  }
+  @media (max-width: 720px){
+    :root{ --left-w:86vw; --right-w:86vw; --timeline-h:170px; }
+    #topbar{padding:6px 8px;gap:6px;min-height:48px}
+    .brand .brandFull{display:none}
+    .brand::after{content:'🎬 VE';font-size:14px}
+    .brand span{display:none}
+    .brand{font-size:0}
+    .btn{padding:7px 10px;font-size:12px;min-height:34px}
+    .btn .lbl{display:none}
+    .btn.ai .lbl, .btn.rec .lbl, .btn.primary .lbl{display:inline}
+    #timeReadout{display:none}
+    #panelToggleLeft{display:inline-flex}
+    #left{position:fixed;top:0;bottom:0;left:0;width:var(--left-w);
+      transform:translateX(-100%);transition:transform .25s ease;
+      box-shadow:10px 0 30px rgba(0,0,0,.5);
+      padding-top:var(--safe-top);padding-bottom:var(--safe-bot);z-index:41}
+    #left.open{transform:translateX(0)}
+    .tabPane{padding:10px}
+    #previewWrap{padding:6px}
+    #preview{border-radius:6px}
+    #transport{padding:6px;gap:6px}
+    #transport button{width:38px;height:34px;font-size:13px;min-width:38px}
+    #playBtn{width:50px!important}
+    #timecode{font-size:12px;min-width:64px}
+    #trackLabels{width:52px}
+    .trackLabel{font-size:8px}
+    #tlToolbar{padding:5px 8px;gap:4px}
+    .clip .handle{width:16px}
+    #ruler{height:20px}
+    .tick{line-height:20px;font-size:9px}
+    .modalContent{padding:10px;border-radius:10px;max-height:98vh}
+    #drawCanvas{max-height:60vh}
+    .srImagesGrid{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width: 420px){
+    :root{ --timeline-h:150px; }
+    #topbar{padding:5px 6px;gap:4px}
+    .btn{padding:6px 8px;font-size:11px}
+    #transport button{width:34px;height:30px;font-size:12px;min-width:34px}
+    #playBtn{width:44px!important}
+    #timecode{font-size:11px;min-width:56px}
+    .thumb{width:50px;height:30px}
+    .kitBtn{padding:6px;font-size:10px}
+    .fxBtn{padding:6px 2px;font-size:9px;min-height:48px}
+    .drawToolbar{gap:6px}
+    .drawToolbar button{padding:7px 10px;font-size:12px}
+  }
+  @media (max-height: 500px) and (orientation: landscape){
+    :root{ --timeline-h:120px; }
+    #topbar{min-height:42px;padding:4px 8px}
+    #previewWrap{padding:4px}
+    #transport{padding:4px;gap:4px}
+    #transport button{width:34px;height:28px;font-size:12px}
+    #playBtn{width:42px!important}
+  }
+  @media (min-width: 1600px){
+    :root{ --left-w:320px; --right-w:340px; --timeline-h:260px; }
+  }
+  @media (hover: none){
+    .clip .handle{width:18px}
+    .mediaItem{padding:9px 7px}
+    .fxRowHead button{padding:0 10px;font-size:22px}
+  }
 </style>
 </head>
 <body>
 <div id="app">
 
   <header id="topbar">
+    <button class="btn icon" id="panelToggleLeft" title="Menu">☰</button>
     <div class="brand">🎬 Video <span>Editor</span></div>
-    <button class="btn" id="importBtn">＋ Import media</button>
+    <button class="btn" id="importBtn" title="Import media">＋<span class="lbl"> Import media</span></button>
     <input type="file" id="fileInput" accept="video/*,image/*,audio/*" multiple hidden>
-    <button class="btn rec" id="recBtn">🎙 Record voice</button>
-    <button class="btn ai" id="openAiBtn">✨ AI Studio</button>
+    <button class="btn rec" id="recBtn" title="Record voice">🎙<span class="lbl"> Record voice</span></button>
+    <button class="btn ai" id="openAiBtn" title="AI Studio">✨<span class="lbl"> AI Studio</span></button>
     <div class="spacer"></div>
     <div id="timeReadout">00:00.0 / 00:00.0</div>
-    <button class="btn primary" id="exportBtn">⬇ Export</button>
+    <button class="btn primary" id="exportBtn">⬇<span class="lbl"> Export</span></button>
+    <button class="btn icon" id="panelToggleRight" title="Properties">⚙</button>
   </header>
 
   <div id="body">
@@ -389,7 +506,7 @@
       </div>
 
       <div class="tabPane" id="tab-media">
-        <div id="dropzone">Drop video, image or audio files<br>or click <b>Import media</b></div>
+        <div id="dropzone">Drop video, image or audio files<br>or tap <b>Import media</b></div>
         <div id="mediaList"></div>
       </div>
 
@@ -402,7 +519,7 @@
 
       <div class="tabPane hidden" id="tab-draw">
         <button class="actionBtn" id="newDrawingBtn">🎨 New drawing</button>
-        <p class="muted" style="margin-top:0">Draw with mouse or finger. Saved drawings appear in MEDIA.</p>
+        <p class="muted" style="margin-top:0">Draw with mouse, pen, or finger. Saved drawings appear in MEDIA.</p>
       </div>
 
       <div class="tabPane hidden" id="tab-fx">
@@ -417,23 +534,19 @@
           <h3>✨ AI Studio</h3>
           <p>Type what you want. Smart Search pulls real info + photos.</p>
         </div>
-
         <textarea id="aiPrompt" placeholder="e.g. 'aurora borealis over Iceland' or 'red panda in a tree'"></textarea>
-
         <label class="smartToggle">
           <input type="checkbox" id="aiSmartSearch" checked>
           <span class="stLabel">🔍 Smart Search
             <span class="stSub">Search Wikipedia + Wikimedia for facts & photos</span>
           </span>
         </label>
-
         <div class="aiTypeGrid">
           <button class="aiTypeBtn active" data-ai="text"><span class="aiTypeIcon">📝</span>Text</button>
           <button class="aiTypeBtn" data-ai="image"><span class="aiTypeIcon">🖼</span>Image</button>
           <button class="aiTypeBtn" data-ai="video"><span class="aiTypeIcon">🎞</span>Video</button>
           <button class="aiTypeBtn" data-ai="draw"><span class="aiTypeIcon">✏️</span>Draw</button>
         </div>
-
         <div class="aiRow">
           <label>Mood</label>
           <select id="aiStyle">
@@ -446,7 +559,6 @@
             <option value="space">Outer space</option>
           </select>
         </div>
-
         <div class="aiRow" id="aiDurRow" style="display:none">
           <label>Length</label>
           <select id="aiDuration">
@@ -456,15 +568,12 @@
             <option value="8">8s</option>
           </select>
         </div>
-
         <div class="aiBtnRow">
           <button class="aiSearchBtn" id="aiSearchBtn" title="Search only">🔍 Search</button>
           <button class="aiGenBtn" id="aiGenBtn">✨ Generate</button>
         </div>
         <div id="aiStatus">Ready.</div>
         <div id="aiProgress"><div id="aiProgressBar"></div></div>
-
-        <!-- Search results panel -->
         <div id="aiSearchPanel">
           <div class="srHead" id="srToggle">
             <span>🔍 SEARCH RESULTS</span>
@@ -474,7 +583,6 @@
             <div class="srEmpty">No search yet — type a prompt and hit 🔍 Search, or press Generate.</div>
           </div>
         </div>
-
         <div class="aiExamples">
           <b>Try these:</b>
           <span class="aiExChip">aurora borealis over Iceland</span>
@@ -490,7 +598,6 @@
           <span class="aiExChip">snow leopard</span>
           <span class="aiExChip">cherry blossom japan</span>
         </div>
-
         <details class="aiSettings">
           <summary>Use real AI APIs (optional)</summary>
           <div class="apiToggle">
@@ -534,7 +641,6 @@
       <span id="zoomLabel">100%</span>
       <button class="btn sm" id="zoomIn">＋</button>
     </div>
-
     <div id="tlBody">
       <div id="trackLabels">
         <div class="trackLabel" style="height:64px">Video</div>
@@ -556,6 +662,9 @@
   </footer>
 </div>
 
+<div id="drawerBackdrop"></div>
+
+<!-- Draw modal -->
 <div class="modal hidden" id="drawModal">
   <div class="modalContent">
     <div class="modalHeader">
@@ -573,7 +682,63 @@
       <button id="undoDraw">↶ Undo</button>
       <button id="clearDraw">🗑 Clear</button>
       <div class="spacer" style="flex:1"></div>
-      <button class="primary" id="saveDraw">✓ Save to media</button>
+      <button class="primary" id="saveDraw">✓ Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export modal -->
+<div class="modal hidden" id="exportModal">
+  <div class="modalContent">
+    <div class="modalHeader">
+      <h2>⬇ Export video</h2>
+      <button id="closeExport" title="Close">×</button>
+    </div>
+    <div id="exportChoices">
+      <div class="fmtOption selected" data-fmt="mp4">
+        <div class="fmtIcon">🎬</div>
+        <div class="fmtInfo">
+          <div class="fmtName">MP4 <span class="fmtBadge universal">WORKS EVERYWHERE</span></div>
+          <div class="fmtDesc">Plays on iPhone, Android, Windows Media Player, QuickTime, TV, and every social platform. Takes 1–2× longer since it re-encodes in your browser.</div>
+        </div>
+      </div>
+      <div class="fmtOption" data-fmt="webm">
+        <div class="fmtIcon">⚡</div>
+        <div class="fmtInfo">
+          <div class="fmtName">WebM <span class="fmtBadge fast">FAST</span></div>
+          <div class="fmtDesc">Instant export. Plays in VLC, Chrome, Edge, Firefox, and Windows Movies & TV. May not open on iPhone or in QuickTime.</div>
+        </div>
+      </div>
+      <button class="actionBtn" id="startExport" style="margin-top:6px;margin-bottom:0">⬇ Export now</button>
+    </div>
+
+    <div id="exportProgress">
+      <div class="epStep" id="epStep1"><span>🎥 Recording timeline</span><span id="epStep1Pct">0%</span></div>
+      <div class="epBar"><div class="epBarFill" id="epBar1"></div></div>
+      <div class="epStep" id="epStep2" style="display:none"><span>⚙️ Loading MP4 encoder (first time only)</span><span id="epStep2Pct"></span></div>
+      <div class="epBar" id="epBar2Wrap" style="display:none"><div class="epBarFill" id="epBar2"></div></div>
+      <div class="epStep" id="epStep3" style="display:none"><span>🔁 Converting to MP4</span><span id="epStep3Pct">0%</span></div>
+      <div class="epBar" id="epBar3Wrap" style="display:none"><div class="epBarFill" id="epBar3"></div></div>
+      <p class="muted" style="font-size:11px;margin-top:12px;line-height:1.5" id="epHint">
+        Keep this tab open — the export runs in your browser.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Export result modal -->
+<div class="modal hidden" id="resultModal">
+  <div class="modalContent" style="width:min(94vw,640px)">
+    <div class="modalHeader">
+      <h2 id="resultTitle">✅ Export ready</h2>
+      <button id="closeResult" title="Close">×</button>
+    </div>
+    <video id="resultVideo" controls playsinline
+      style="width:100%;border-radius:8px;background:#000;max-height:60vh"></video>
+    <p class="muted" id="resultInfo" style="font-size:12px;margin:10px 0;line-height:1.5"></p>
+    <div style="display:flex;gap:8px">
+      <button class="btn primary" id="resultDownload" style="flex:1">⬇ Download</button>
+      <button class="btn" id="resultClose2">Close</button>
     </div>
   </div>
 </div>
@@ -663,7 +828,7 @@ const PIXEL_TYPES = new Set(['water','lava','glitch','vhs','pixelate','bw','sepi
 const state = {
   media: [], clips: [], sel: null,
   playhead: 0, playing: false, pps: 80, exporting: false,
-  search: null   // last smart-search result
+  search: null
 };
 const canvas = $('#preview');
 const ctx = canvas.getContext('2d');
@@ -671,6 +836,50 @@ const lanesEl = $('#lanes');
 const rulerEl = $('#ruler');
 const playheadEl = $('#playhead');
 const laneEls = $$('.lane');
+
+/* =========================================================
+   1b. Responsive drawers
+   ========================================================= */
+const leftPanel = $('#left');
+const rightPanel = $('#right');
+const backdrop = $('#drawerBackdrop');
+function isNarrow(){ return window.matchMedia('(max-width: 900px)').matches; }
+function isPhone(){ return window.matchMedia('(max-width: 720px)').matches; }
+function openDrawer(which){
+  closeDrawers();
+  if (which === 'left') leftPanel.classList.add('open');
+  if (which === 'right') rightPanel.classList.add('open');
+  backdrop.classList.add('show');
+}
+function closeDrawers(){
+  leftPanel.classList.remove('open');
+  rightPanel.classList.remove('open');
+  backdrop.classList.remove('show');
+}
+$('#panelToggleLeft').onclick = () => openDrawer('left');
+$('#panelToggleRight').onclick = () => openDrawer('right');
+backdrop.onclick = closeDrawers;
+let lastNarrow = isNarrow();
+window.addEventListener('resize', () => {
+  const n = isNarrow();
+  if (n !== lastNarrow){ closeDrawers(); lastNarrow = n; }
+});
+leftPanel.addEventListener('touchstart', e => {
+  if (!isPhone()) return;
+  leftPanel._startX = e.touches[0].clientX;
+}, {passive:true});
+leftPanel.addEventListener('touchend', e => {
+  if (!isPhone()) return;
+  if (leftPanel._startX - e.changedTouches[0].clientX > 60) closeDrawers();
+}, {passive:true});
+rightPanel.addEventListener('touchstart', e => {
+  if (!isNarrow()) return;
+  rightPanel._startX = e.touches[0].clientX;
+}, {passive:true});
+rightPanel.addEventListener('touchend', e => {
+  if (!isNarrow()) return;
+  if (e.changedTouches[0].clientX - rightPanel._startX > 60) closeDrawers();
+}, {passive:true});
 
 /* =========================================================
    2. Media handling
@@ -734,7 +943,7 @@ function renderMediaList(){
   const list = $('#mediaList');
   if (!state.media.length){ list.innerHTML = ''; return; }
   list.innerHTML = state.media.map(m => `
-    <div class="mediaItem ${m.ai ? 'ai' : ''} ${m.search ? 'search' : ''}" data-id="${m.id}" title="Click to add to timeline">
+    <div class="mediaItem ${m.ai ? 'ai' : ''} ${m.search ? 'search' : ''}" data-id="${m.id}" title="Tap to add to timeline">
       <div class="thumb" ${m.thumb ? `style="background-image:url(${m.thumb})"` : ''}>
         ${m.thumb ? '' : (m.type === 'audio' ? '🎵' : m.type === 'image' ? '🖼' : '🎞')}
       </div>
@@ -772,6 +981,7 @@ function addMediaClip(mediaId){
     in: 0, volume: 1, opacity: 1, fadeIn: 0, fadeOut: 0, effects: [],
     isAI: !!m.ai, isSearch: !!m.search };
   state.clips.push(clip); select(clip.id); renderTimeline();
+  if (isPhone()) closeDrawers();
 }
 function addTextClip(preset, customText){
   const cfg = {
@@ -968,7 +1178,8 @@ function toast(msg){
   let el = document.getElementById('toast');
   if (!el){
     el = document.createElement('div'); el.id = 'toast';
-    el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+    el.style.cssText = 'position:fixed;bottom:calc(20px + var(--safe-bot));left:50%;' +
+      'transform:translateX(-50%);max-width:92vw;text-align:center;' +
       'background:#262c3b;border:1px solid #6c5ce7;color:#e8ebf2;padding:10px 16px;' +
       'border-radius:8px;font-size:13px;font-weight:600;z-index:9999;' +
       'box-shadow:0 8px 24px rgba(0,0,0,.5);transition:.2s;pointer-events:none';
@@ -1359,70 +1570,332 @@ function loop(ts){
 requestAnimationFrame(loop);
 
 /* =========================================================
-   12. Export
+   12. EXPORT (WebM + MP4)
    ========================================================= */
-async function exportVideo(){
+let pendingFormat = 'mp4';
+
+$('#exportBtn').onclick = () => {
+  if (!totalDuration()){ alert('Add some clips to the timeline first.'); return; }
+  $('#exportModal').classList.remove('hidden');
+  $('#exportChoices').style.display = '';
+  $('#exportProgress').classList.remove('show');
+  $$('.fmtOption').forEach(o => o.classList.toggle('selected', o.dataset.fmt === pendingFormat));
+};
+$('#closeExport').onclick = () => {
   if (state.exporting) return;
-  const dur = totalDuration();
-  if (dur < 0.2){ alert('Add some clips to the timeline first.'); return; }
-  if (typeof MediaRecorder === 'undefined' || !canvas.captureStream){
-    alert('Your browser does not support recording. Try Chrome or Edge.'); return;
-  }
+  $('#exportModal').classList.add('hidden');
+};
+$$('.fmtOption').forEach(o => {
+  o.onclick = () => {
+    pendingFormat = o.dataset.fmt;
+    $$('.fmtOption').forEach(x => x.classList.remove('selected'));
+    o.classList.add('selected');
+  };
+});
+$('#startExport').onclick = () => {
+  $('#exportChoices').style.display = 'none';
+  $('#exportProgress').classList.add('show');
+  if (pendingFormat === 'mp4') exportVideoMP4();
+  else exportVideoWebM();
+};
+$('#closeResult').onclick = () => $('#resultModal').classList.add('hidden');
+$('#resultClose2').onclick = () => $('#resultModal').classList.add('hidden');
+
+/* ---- Shared recording step ---- */
+async function recordTimeline(onProgress){
+  return new Promise(async (resolve, reject) => {
+    const dur = totalDuration();
+    if (dur < 0.2){ reject(new Error('Timeline is empty.')); return; }
+
+    ensureAudio(); setPlaying(false); setPlayhead(0);
+
+    // Park every media at its in-point
+    state.clips.forEach(c => {
+      if (c.kind !== 'media') return;
+      const m = getMedia(c);
+      if (!m || m.type === 'image') return;
+      try { m.el.currentTime = c.in || 0; } catch(e){}
+    });
+    await new Promise(r => setTimeout(r, 500));
+
+    // Build stream
+    const canvasStream = canvas.captureStream(30);
+    const videoTracks = canvasStream.getVideoTracks();
+
+    const hasAudio = state.clips.some(c => {
+      if (c.kind !== 'media') return false;
+      const m = getMedia(c);
+      return m && (m.type === 'video' || m.type === 'audio');
+    });
+
+    const tracks = [...videoTracks];
+    if (hasAudio && streamDest && streamDest.stream.getAudioTracks().length){
+      tracks.push(...streamDest.stream.getAudioTracks());
+    }
+    const outStream = new MediaStream(tracks);
+
+    // Prefer VP8 for max compatibility
+    const candidates = [
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp8',
+      'video/webm;codecs=vp9,opus',
+      'video/webm'
+    ];
+    const mimeType = candidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+
+    let rec;
+    try{
+      rec = new MediaRecorder(outStream, { mimeType,
+        videoBitsPerSecond: 6_000_000, audioBitsPerSecond: 128_000 });
+    } catch(e){ reject(e); return; }
+
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      if (!chunks.length){ reject(new Error('Recorder produced no data.')); return; }
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      resolve(blob);
+    };
+
+    if (masterGain) masterGain.gain.value = 0;
+    rec.start(200);
+    await new Promise(r => setTimeout(r, 200));
+    setPlayhead(0);
+    setPlaying(true);
+
+    const deadline = performance.now() + dur * 1000 + 20000;
+    const monitor = () => {
+      const pct = Math.min(99, Math.round((state.playhead / dur) * 100));
+      onProgress && onProgress(pct);
+      const done = state.playhead >= dur - 0.03 || !state.playing;
+      const timedOut = performance.now() > deadline;
+      if (done || timedOut){
+        setPlaying(false); setPlayhead(dur);
+        setTimeout(() => { if (rec.state !== 'inactive') rec.stop(); }, 800);
+        return;
+      }
+      requestAnimationFrame(monitor);
+    };
+    requestAnimationFrame(monitor);
+  });
+}
+
+/* ---- WebM export (fast path) ---- */
+async function exportVideoWebM(){
+  if (state.exporting) return;
   state.exporting = true;
   const btn = $('#exportBtn');
-  btn.disabled = true; btn.textContent = 'Preparing…';
-  ensureAudio(); setPlaying(false); setPlayhead(0);
-  state.clips.forEach(c => {
-    if (c.kind !== 'media') return;
-    const m = getMedia(c);
-    if (!m || m.type === 'image') return;
-    try { m.el.currentTime = c.in || 0; } catch(e){}
-  });
-  await new Promise(r => setTimeout(r, 350));
-  const canvasStream = canvas.captureStream(30);
-  const tracks = [...canvasStream.getVideoTracks()];
-  if (streamDest) tracks.push(...streamDest.stream.getAudioTracks());
-  const outStream = new MediaStream(tracks);
-  const candidates = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
-  const mimeType = candidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
-  let rec;
+  btn.disabled = true;
+
+  // Reset progress UI
+  $('#epStep1').className = 'epStep active';
+  $('#epStep1Pct').textContent = '0%';
+  $('#epBar1').style.width = '0%';
+  $('#epStep2').style.display = 'none';
+  $('#epBar2Wrap').style.display = 'none';
+  $('#epStep3').style.display = 'none';
+  $('#epBar3Wrap').style.display = 'none';
+  $('#epHint').textContent = 'Recording your timeline…';
+
   try{
-    rec = new MediaRecorder(outStream, { mimeType,
-      videoBitsPerSecond: 8_000_000, audioBitsPerSecond: 128_000 });
-  } catch(e){
-    alert('Could not start recorder: ' + e.message);
-    state.exporting = false; btn.disabled = false; btn.textContent = '⬇ Export'; return;
-  }
-  const chunks = [];
-  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-  rec.onstop = () => {
-    const blob = new Blob(chunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'video-editor-export.webm';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    const blob = await recordTimeline(pct => {
+      $('#epStep1Pct').textContent = pct + '%';
+      $('#epBar1').style.width = pct + '%';
+    });
     if (masterGain) masterGain.gain.value = 1;
-    state.exporting = false; btn.disabled = false; btn.textContent = '⬇ Export';
-  };
-  if (masterGain) masterGain.gain.value = 0;
-  rec.start(250);
-  setPlayhead(0); setPlaying(true);
-  const deadline = performance.now() + dur * 1000 + 15000;
-  const monitor = () => {
-    if (!state.exporting) return;
-    const pct = Math.min(99, Math.round((state.playhead / dur) * 100));
-    btn.textContent = `Exporting ${pct}%`;
-    const done = state.playhead >= dur - 0.03 || !state.playing;
-    const timedOut = performance.now() > deadline;
-    if (done || timedOut){
-      setPlaying(false); setPlayhead(dur);
-      setTimeout(() => { if (rec.state !== 'inactive') rec.stop(); }, 400);
-      return;
+
+    $('#epStep1').className = 'epStep done';
+    $('#epBar1').style.width = '100%';
+    $('#epHint').textContent = 'Done!';
+    $('#exportModal').classList.add('hidden');
+
+    showResult(blob, 'webm');
+  } catch(err){
+    if (masterGain) masterGain.gain.value = 1;
+    alert('Export failed: ' + (err.message || err));
+    $('#exportModal').classList.add('hidden');
+  } finally {
+    state.exporting = false;
+    btn.disabled = false;
+  }
+}
+
+/* ---- MP4 export (record → ffmpeg.wasm) ---- */
+let ffmpegInstance = null;
+let ffmpegLoading = false;
+
+async function loadFFmpeg(onProgress){
+  if (ffmpegInstance && ffmpegInstance.loaded) return ffmpegInstance;
+  if (ffmpegLoading){
+    while (ffmpegLoading) await new Promise(r => setTimeout(r, 100));
+    return ffmpegInstance;
+  }
+  ffmpegLoading = true;
+
+  try{
+    if (!window.FFmpegLib){
+      // Load UMD build of @ffmpeg/ffmpeg v0.11.6 (stable, single-script)
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Failed to load ffmpeg library'));
+        document.head.appendChild(s);
+      });
+      window.FFmpegLib = window.FFmpeg;
     }
-    requestAnimationFrame(monitor);
+
+    const { createFFmpeg } = window.FFmpegLib;
+    const ffmpeg = createFFmpeg({
+      log: false,
+      corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+      progress: ({ ratio }) => {
+        if (ratio >= 0 && ratio <= 1 && onProgress) onProgress(Math.round(ratio * 100));
+      }
+    });
+
+    onProgress && onProgress(5);
+    await ffmpeg.load();
+    ffmpeg.loaded = true;
+    ffmpegInstance = ffmpeg;
+    return ffmpeg;
+  } finally {
+    ffmpegLoading = false;
+  }
+}
+
+async function exportVideoMP4(){
+  if (state.exporting) return;
+  state.exporting = true;
+  const btn = $('#exportBtn');
+  btn.disabled = true;
+
+  // Reset progress UI
+  $('#epStep1').className = 'epStep active';
+  $('#epStep1Pct').textContent = '0%';
+  $('#epBar1').style.width = '0%';
+  $('#epStep2').style.display = 'none';
+  $('#epBar2Wrap').style.display = 'none';
+  $('#epStep3').style.display = 'none';
+  $('#epBar3Wrap').style.display = 'none';
+  $('#epHint').textContent = 'Step 1 of 3: recording your timeline…';
+
+  try{
+    // ---- Step 1: Record to WebM ----
+    const webmBlob = await recordTimeline(pct => {
+      $('#epStep1Pct').textContent = pct + '%';
+      $('#epBar1').style.width = pct + '%';
+    });
+    if (masterGain) masterGain.gain.value = 1;
+    $('#epStep1').className = 'epStep done';
+    $('#epBar1').style.width = '100%';
+
+    // ---- Step 2: Load ffmpeg ----
+    $('#epStep2').style.display = 'flex';
+    $('#epBar2Wrap').style.display = 'block';
+    $('#epStep2').className = 'epStep active';
+    $('#epHint').textContent = 'Step 2 of 3: loading MP4 encoder (first time only — ~30 MB)…';
+
+    let lastPct = 0;
+    await loadFFmpeg(pct => {
+      lastPct = pct;
+      $('#epStep2Pct').textContent = pct + '%';
+      $('#epBar2').style.width = Math.min(100, pct * 2) + '%';
+    });
+    $('#epStep2').className = 'epStep done';
+    $('#epBar2').style.width = '100%';
+    $('#epStep2Pct').textContent = '100%';
+
+    // ---- Step 3: Convert WebM → MP4 ----
+    $('#epStep3').style.display = 'flex';
+    $('#epBar3Wrap').style.display = 'block';
+    $('#epStep3').className = 'epStep active';
+    $('#epHint').textContent = 'Step 3 of 3: converting to MP4…';
+
+    const ffmpeg = ffmpegInstance;
+    const { fetchFile } = window.FFmpegLib;
+
+    const inName = 'input.webm';
+    const outName = 'output.mp4';
+
+    ffmpeg.FS('writeFile', inName, await fetchFile(webmBlob));
+
+    await ffmpeg.run(
+      '-i', inName,
+      '-c:v', 'libx264',
+      '-preset', 'ultrafast',
+      '-crf', '23',
+      '-pix_fmt', 'yuv420p',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      '-movflags', '+faststart',
+      outName
+    );
+
+    $('#epBar3').style.width = '100%';
+    $('#epStep3Pct').textContent = '100%';
+    $('#epStep3').className = 'epStep done';
+
+    const data = ffmpeg.FS('readFile', outName);
+    const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+
+    // Clean up files from memory
+    try { ffmpeg.FS('unlink', inName); } catch(e){}
+    try { ffmpeg.FS('unlink', outName); } catch(e){}
+
+    $('#epHint').textContent = 'Done!';
+    $('#exportModal').classList.add('hidden');
+
+    showResult(mp4Blob, 'mp4');
+  } catch(err){
+    console.error('MP4 export failed:', err);
+    if (masterGain) masterGain.gain.value = 1;
+    alert('MP4 export failed: ' + (err.message || err) +
+          '\n\nTip: this needs an internet connection the first time to download the encoder. ' +
+          'If it keeps failing, use WebM instead — it works offline and plays in VLC/Chrome.');
+    $('#exportModal').classList.add('hidden');
+  } finally {
+    state.exporting = false;
+    btn.disabled = false;
+  }
+}
+
+/* ---- Result modal with preview + download ---- */
+function showResult(blob, format){
+  const url = URL.createObjectURL(blob);
+  const sizeMB = (blob.size / 1024 / 1024).toFixed(1);
+  const ext = format === 'mp4' ? 'mp4' : 'webm';
+  const filename = 'video-editor-export.' + ext;
+
+  $('#resultTitle').textContent = format === 'mp4'
+    ? '✅ MP4 ready (plays everywhere)'
+    : '✅ WebM ready (fast format)';
+
+  const info = $('#resultInfo');
+  info.innerHTML = `Size: <b>${sizeMB} MB</b> · Format: <b>${ext.toUpperCase()}</b><br>` +
+    (format === 'mp4'
+      ? 'Works on iPhone, Android, Windows Media Player, QuickTime, TVs, and every social platform.'
+      : 'Plays in VLC, Chrome, Edge, Firefox, and Windows Movies & TV. Not supported on iPhone or QuickTime.');
+
+  const video = $('#resultVideo');
+  video.src = url;
+
+  $('#resultDownload').onclick = () => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
   };
-  requestAnimationFrame(monitor);
+
+  $('#resultModal').classList.remove('hidden');
+
+  // Auto-open the downloader once (feels like a save dialog)
+  setTimeout(() => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  }, 250);
 }
 
 /* =========================================================
@@ -1582,13 +2055,13 @@ async function toggleVoiceRecording(){
     micRecorder = null; updateRecUI();
   };
   micRecorder.start(); updateRecUI();
-  toast('Recording… click the mic again to stop');
+  toast('Recording… tap the mic again to stop');
 }
 function updateRecUI(){
   const btn = $('#recBtn');
   const recording = micRecorder && micRecorder.state === 'recording';
   btn.classList.toggle('recording', recording);
-  btn.textContent = recording ? '⏹ Stop recording' : '🎙 Record voice';
+  btn.innerHTML = recording ? '⏹<span class="lbl"> Stop</span>' : '🎙<span class="lbl"> Record voice</span>';
 }
 
 /* =========================================================
@@ -1679,7 +2152,7 @@ $('#saveDraw').onclick = () => {
   };
   if (el.complete && el.naturalWidth) finish(); else el.onload = finish;
   addMediaItem(item); closeDrawModal(); switchTab('media');
-  toast('Drawing saved to media — click it to add to timeline');
+  toast('Drawing saved to media');
 };
 function openDrawModal(){
   $('#drawModal').classList.remove('hidden');
@@ -1692,6 +2165,8 @@ $('#closeDraw').onclick = closeDrawModal;
 $('#drawModal').addEventListener('click', e => { if (e.target.id === 'drawModal') closeDrawModal(); });
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#drawModal').classList.contains('hidden')) closeDrawModal();
+  if (e.key === 'Escape' && !$('#exportModal').classList.contains('hidden') && !state.exporting)
+    $('#exportModal').classList.add('hidden');
 });
 
 /* =========================================================
@@ -1706,7 +2181,7 @@ function switchTab(name){
 }
 
 /* =========================================================
-   17. ✨ SMART SEARCH
+   17. SMART SEARCH
    ========================================================= */
 const STOP_WORDS = new Set(['the','a','an','and','or','of','to','in','on','for','with',
   'is','are','was','were','be','been','being','by','as','at','from','that','this',
@@ -1715,15 +2190,10 @@ const STOP_WORDS = new Set(['the','a','an','and','or','of','to','in','on','for',
   'then','there','their','they','them','these','those','some','any','all','other',
   'such','only','own','same','too','very','just','but','not','no','nor']);
 
-/**
- * Search Wikipedia + Wikimedia Commons for a query.
- * Returns: { title, summary, url, keywords, related, images: [{url, thumb, title}] }
- */
 async function smartSearch(query){
   const result = { title: query, summary: '', url: null, keywords: [], related: [], images: [] };
   if (!query || query.trim().length < 2) return result;
 
-  // 1. Find closest Wikipedia page
   let bestTitle = null;
   try {
     const url = 'https://en.wikipedia.org/w/api.php?' + new URLSearchParams({
@@ -1740,7 +2210,6 @@ async function smartSearch(query){
     }
   } catch(e){ console.warn('search step1', e); }
 
-  // 2. Get page summary
   if (bestTitle){
     try {
       const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' +
@@ -1753,7 +2222,6 @@ async function smartSearch(query){
     } catch(e){ console.warn('search step2', e); }
   }
 
-  // 3. Extract keywords from title + summary
   const text = (result.title + ' ' + result.summary + ' ' + query).toLowerCase();
   const words = text.match(/[a-z][a-z\-']{3,}/g) || [];
   const freq = {};
@@ -1761,19 +2229,13 @@ async function smartSearch(query){
   result.keywords = Object.entries(freq)
     .sort((a, b) => b[1] - a[1]).slice(0, 14).map(x => x[0]);
 
-  // 4. Fetch reference images from Wikimedia Commons
   try {
     const url = 'https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
-      action: 'query',
-      generator: 'search',
+      action: 'query', generator: 'search',
       gsrsearch: (query + ' filetype:bitmap').slice(0, 200),
-      gsrnamespace: '6',
-      gsrlimit: '12',
-      prop: 'imageinfo',
-      iiprop: 'url|extmetadata',
-      iiurlwidth: '280',
-      format: 'json',
-      origin: '*'
+      gsrnamespace: '6', gsrlimit: '12',
+      prop: 'imageinfo', iiprop: 'url|extmetadata',
+      iiurlwidth: '280', format: 'json', origin: '*'
     });
     const r = await fetch(url);
     const data = await r.json();
@@ -1786,8 +2248,7 @@ async function smartSearch(query){
       if (!thumb) continue;
       if (!/\.(jpe?g|png|gif|webp)$/i.test(info.url || '')) continue;
       result.images.push({
-        thumb,
-        url: info.url,
+        thumb, url: info.url,
         title: p.title.replace(/^File:/, '').replace(/\.\w+$/, '')
       });
       if (result.images.length >= 9) break;
@@ -1797,43 +2258,31 @@ async function smartSearch(query){
   return result;
 }
 
-/* --------- Render search results panel --------- */
 function renderSearchPanel(data){
   const panel = $('#aiSearchPanel');
   const body = $('#srBody');
   const count = $('#srCount');
-
   if (!data || (!data.title && !data.images.length)){
     panel.classList.add('show');
     count.textContent = '0';
     body.innerHTML = '<div class="srEmpty">No results found — try a different prompt.</div>';
     return;
   }
-
   panel.classList.add('show');
   count.textContent = `${data.images.length} img · ${data.related.length} pages`;
 
   let html = '';
-
-  // Title + link
   html += `<div class="srTitle">📖 ${esc(data.title)}`;
   if (data.url) html += ` <a href="${esc(data.url)}" target="_blank" rel="noopener">↗</a>`;
   html += `</div>`;
-
-  // Summary
   if (data.summary) html += `<div class="srSummary">${esc(data.summary)}</div>`;
-
-  // Keywords
   if (data.keywords.length){
     html += `<div class="srSectionLabel">Keywords</div>`;
     html += `<div class="srKeywords">` +
-      data.keywords.map(k => `<span class="srKeyword">${esc(k)}</span>`).join('') +
-      `</div>`;
+      data.keywords.map(k => `<span class="srKeyword">${esc(k)}</span>`).join('') + `</div>`;
   }
-
-  // Images
   if (data.images.length){
-    html += `<div class="srSectionLabel">Photos from Wikimedia (click to import)</div>`;
+    html += `<div class="srSectionLabel">Photos (tap to import)</div>`;
     html += `<div class="srImagesGrid" id="srImagesGrid">`;
     data.images.forEach((img, i) => {
       html += `<div class="srImgWrap loading" data-i="${i}">
@@ -1845,135 +2294,108 @@ function renderSearchPanel(data){
     });
     html += `</div>`;
   }
-
-  // Related pages
   if (data.related.length > 1){
     html += `<div class="srSectionLabel">Related</div>`;
     html += `<div class="srRelated">` +
       data.related.slice(0, 6).map(r =>
-        `<span class="srRelatedChip" data-title="${esc(r)}">${esc(r)}</span>`).join('') +
-      `</div>`;
+        `<span class="srRelatedChip" data-title="${esc(r)}">${esc(r)}</span>`).join('') + `</div>`;
   }
-
   body.innerHTML = html;
 
-  // Wire up image clicks — import Wikimedia image
   $$('#srImagesGrid .srImgWrap').forEach(wrap => {
     wrap.onclick = () => {
       const img = data.images[+wrap.dataset.i];
       if (img) importWikimediaImage(img);
     };
   });
-  // Related chips — set as prompt
   $$('.srRelatedChip').forEach(chip => {
-    chip.onclick = () => {
-      $('#aiPrompt').value = chip.dataset.title;
-      $('#aiPrompt').focus();
-    };
+    chip.onclick = () => { $('#aiPrompt').value = chip.dataset.title; $('#aiPrompt').focus(); };
   });
 }
 
-/* --------- Import a Wikimedia image into the media library --------- */
 async function importWikimediaImage(img){
   try {
     setAiStatus(`Importing "${img.title}"…`, 'search');
-    // Try to fetch image as blob (Wikipedia may CORS-allow via upload.wikimedia.org)
     let url = img.url;
     let blob = null;
     try {
       const r = await fetch(url, { mode: 'cors' });
       if (r.ok) blob = await r.blob();
-    } catch(e){ /* fall through to direct URL */ }
-
+    } catch(e){}
     const el = new Image();
     el.crossOrigin = 'anonymous';
-    if (blob){
-      url = URL.createObjectURL(blob);
-    }
+    if (blob) url = URL.createObjectURL(blob);
     el.src = url;
-
     await new Promise(res => {
       el.onload = () => res();
       el.onerror = () => res();
       setTimeout(res, 3000);
     });
-
-    // Try to draw a thumb (may fail due to tainted canvas if no CORS)
     const c = document.createElement('canvas');
     c.width = 128; c.height = 72;
     const cx = c.getContext('2d');
     let thumb = img.thumb;
-    try {
-      cx.drawImage(el, 0, 0, 128, 72);
-      thumb = c.toDataURL('image/jpeg', 0.6);
-    } catch(e){ /* canvas tainted — fallback to remote thumb */ }
-
+    try { cx.drawImage(el, 0, 0, 128, 72); thumb = c.toDataURL('image/jpeg', 0.6); }
+    catch(e){}
     const item = {
-      id: uid(),
-      name: '🔍 ' + img.title.slice(0, 30),
-      type: 'image', url, el,
-      duration: 5,
-      w: el.naturalWidth || 1024,
-      h: el.naturalHeight || 720,
-      thumb, ready: true,
-      search: true
+      id: uid(), name: '🔍 ' + img.title.slice(0, 30),
+      type: 'image', url, el, duration: 5,
+      w: el.naturalWidth || 1024, h: el.naturalHeight || 720,
+      thumb, ready: true, search: true
     };
     addMediaItem(item);
-    setAiStatus(`✓ Imported "${img.title}" — click it in MEDIA to add to timeline.`, 'ok');
+    setAiStatus(`✓ Imported "${img.title}"`, 'ok');
     switchTab('media');
+    if (isPhone()) closeDrawers();
   } catch(err){
     setAiStatus('⚠ Could not import image: ' + (err.message || err), 'err');
   }
 }
 
 /* =========================================================
-   18. ✨ AI GENERATION (uses smart-search context)
+   18. AI scene rendering (compact — same as before)
    ========================================================= */
-
-/* Scene detection now accepts an optional context object from smart search */
-function detectScene(prompt, ctx){
-  const extra = ctx ? (ctx.keywords || []).join(' ') + ' ' + (ctx.title || '') + ' ' + (ctx.summary || '') : '';
+function detectScene(prompt, ctx2){
+  const extra = ctx2 ? (ctx2.keywords || []).join(' ') + ' ' + (ctx2.title || '') + ' ' + (ctx2.summary || '') : '';
   const p = (prompt + ' ' + extra).toLowerCase();
   const has = re => re.test(p);
   return {
-    night:    has(/night|dark|midnight|moon|stars|evening|dusk/),
-    sunset:   has(/sunset|dusk|golden|evening|warm/),
-    sunrise:  has(/sunrise|dawn|morning/),
-    storm:    has(/storm|thunder|cloudy|overcast|rainy/),
-    snow:     has(/snow|winter|ice|frost|blizzard|cold|glacier|arctic|antarctic/),
-    space:    has(/space|galaxy|cosmic|planet|universe|nebula|astro|stars|orbit/),
-    ocean:    has(/ocean|sea|lake|underwater|aquarium|reef|coral/),
-    beach:    has(/beach|shore|coast|island|sand|palm/),
-    forest:   has(/forest|tree|wood|jungle|pine|rainforest|amazon/),
-    city:     has(/city|urban|building|town|skyline|downtown|street|tokyo|paris|london|new york/),
-    mountains:has(/mountain|hill|peak|valley|alps|fuji|everest|andes|rockies/),
-    fire:     has(/fire|flame|lava|volcano|burn|ember|hell|eruption/),
-    desert:   has(/desert|sand|dune|sahara/),
-    moon:     has(/moon|lunar/),
-    sun:      has(/sun|sunny/),
-    car:      has(/car|auto|vehicle|truck|driving|road/),
-    house:    has(/house|home|cabin|hut|cottage|villa/),
-    boat:     has(/boat|ship|sail|yacht|cruise/),
-    rocket:   has(/rocket|spaceship|spacecraft|launch|nasa|spacex/),
-    flower:   has(/flower|bloom|rose|garden|tulip|daisy|cherry|blossom|sakura/),
-    person:   has(/person|people|man|woman|figure|human|silhouette|character/),
-    cat:      has(/\bcat\b|kitten|tiger|lion|leopard|panther|panda|feline/),
-    dog:      has(/\bdog\b|puppy|wolf|fox|coyote|canine/),
-    bird:     has(/bird|eagle|crow|flying|seagull|owl|hawk|parrot|penguin/),
-    butterfly:has(/butterfly/),
-    heart:    has(/heart|love|valentine/),
-    balloon:  has(/balloon|birthday|party/),
-    fish:     has(/fish|shark|whale|dolphin|penguin|seal/),
-    tree:     has(/\btree\b|palm/),
-    rain:     has(/rain|downpour|monsoon/),
-    aurora:   has(/aurora|borealis|australis|northern lights/),
+    night: has(/night|dark|midnight|moon|stars|evening|dusk/),
+    sunset: has(/sunset|dusk|golden|evening|warm/),
+    sunrise: has(/sunrise|dawn|morning/),
+    storm: has(/storm|thunder|cloudy|overcast|rainy/),
+    snow: has(/snow|winter|ice|frost|blizzard|cold|glacier|arctic|antarctic/),
+    space: has(/space|galaxy|cosmic|planet|universe|nebula|astro|stars|orbit/),
+    ocean: has(/ocean|sea|lake|underwater|aquarium|reef|coral/),
+    beach: has(/beach|shore|coast|island|sand|palm/),
+    forest: has(/forest|tree|wood|jungle|pine|rainforest|amazon/),
+    city: has(/city|urban|building|town|skyline|downtown|street|tokyo|paris|london|new york/),
+    mountains: has(/mountain|hill|peak|valley|alps|fuji|everest|andes|rockies/),
+    fire: has(/fire|flame|lava|volcano|burn|ember|hell|eruption/),
+    desert: has(/desert|sand|dune|sahara/),
+    moon: has(/moon|lunar/),
+    sun: has(/sun|sunny/),
+    car: has(/car|auto|vehicle|truck|driving|road/),
+    house: has(/house|home|cabin|hut|cottage|villa/),
+    boat: has(/boat|ship|sail|yacht|cruise/),
+    rocket: has(/rocket|spaceship|spacecraft|launch|nasa|spacex/),
+    flower: has(/flower|bloom|rose|garden|tulip|daisy|cherry|blossom|sakura/),
+    person: has(/person|people|man|woman|figure|human|silhouette|character/),
+    cat: has(/\bcat\b|kitten|tiger|lion|leopard|panther|panda|feline/),
+    dog: has(/\bdog\b|puppy|wolf|fox|coyote|canine/),
+    bird: has(/bird|eagle|crow|flying|seagull|owl|hawk|parrot|penguin/),
+    butterfly: has(/butterfly/),
+    heart: has(/heart|love|valentine/),
+    balloon: has(/balloon|birthday|party/),
+    fish: has(/fish|shark|whale|dolphin|penguin|seal/),
+    tree: has(/\btree\b|palm/),
+    rain: has(/rain|downpour|monsoon/),
+    aurora: has(/aurora|borealis|australis|northern lights/),
     wildlife: has(/wildlife|animal|creature|beast|safari/),
-    ice:      has(/iceberg|glacier|ice|frozen|arctic/),
+    ice: has(/iceberg|glacier|ice|frozen|arctic/),
     tropical: has(/tropical|jungle|palm|hawaii|bali|caribbean/)
   };
 }
-
-/* ---- Scene renderers (unchanged) ---- */
 function drawSky(cx, W, H, sc, t){
   let top, bot;
   if (sc.space){ top = '#05030d'; bot = '#0a0520'; }
@@ -2001,8 +2423,7 @@ function drawAurora(cx, W, H, t){
     const baseY = H * 0.15 + band * 25;
     const hue = 140 + band * 20 + Math.sin(t * 0.4 + band) * 30;
     const alpha = 0.35 - band * 0.04;
-    cx.beginPath();
-    cx.moveTo(0, H);
+    cx.beginPath(); cx.moveTo(0, H);
     for (let x = 0; x <= W; x += 12){
       const y = baseY + Math.sin(x * 0.008 + t * 0.7 + band * 1.2) * 60
                        + Math.sin(x * 0.02 + t * 1.3) * 25;
@@ -2013,8 +2434,7 @@ function drawAurora(cx, W, H, t){
     g.addColorStop(0, `hsla(${hue},80%,65%,0)`);
     g.addColorStop(0.4, `hsla(${hue},80%,60%,${alpha})`);
     g.addColorStop(1, `hsla(${hue + 40},80%,50%,0)`);
-    cx.fillStyle = g;
-    cx.fill();
+    cx.fillStyle = g; cx.fill();
   }
 }
 function drawSun(cx, W, H, t, warm){
@@ -2206,6 +2626,51 @@ function drawDog(cx, x, groundY, h, color){
   cx.lineTo(x - h * 0.55, groundY - h * 0.75);
   cx.stroke();
 }
+function drawHouse(cx, x, groundY, w, t){
+  const h = w * 0.7;
+  cx.fillStyle = '#c8a878';
+  cx.fillRect(x - w/2, groundY - h*0.7, w, h*0.7);
+  cx.fillStyle = '#a03a2a';
+  cx.beginPath();
+  cx.moveTo(x - w*0.55, groundY - h*0.7);
+  cx.lineTo(x, groundY - h);
+  cx.lineTo(x + w*0.55, groundY - h*0.7);
+  cx.closePath(); cx.fill();
+  cx.fillStyle = '#5a3a1a';
+  cx.fillRect(x - w*0.08, groundY - h*0.4, w*0.16, h*0.4);
+  cx.fillStyle = '#4a6a9a';
+  cx.fillRect(x - w*0.35, groundY - h*0.55, w*0.15, h*0.2);
+  cx.fillRect(x + w*0.2, groundY - h*0.55, w*0.15, h*0.2);
+  cx.fillStyle = 'rgba(220,220,220,0.5)';
+  for (let i = 0; i < 3; i++){
+    const offset = (t * 40 + i * 15) % 60;
+    cx.beginPath();
+    cx.arc(x + w*0.25 + Math.sin(t + i) * 5, groundY - h - offset, 6 + i * 2, 0, Math.PI*2);
+    cx.fill();
+  }
+}
+function drawCar(cx, x, groundY, w, color){
+  const h = w * 0.5;
+  cx.fillStyle = color;
+  cx.beginPath();
+  cx.moveTo(x - w/2, groundY);
+  cx.lineTo(x - w/2, groundY - h*0.5);
+  cx.quadraticCurveTo(x - w/2, groundY - h, x - w*0.2, groundY - h);
+  cx.lineTo(x + w*0.2, groundY - h);
+  cx.quadraticCurveTo(x + w/2, groundY - h, x + w/2, groundY - h*0.5);
+  cx.lineTo(x + w/2, groundY);
+  cx.closePath(); cx.fill();
+  cx.fillStyle = 'rgba(150,200,240,0.9)';
+  cx.beginPath();
+  cx.moveTo(x - w*0.35, groundY - h*0.55);
+  cx.lineTo(x - w*0.2, groundY - h*0.9);
+  cx.lineTo(x + w*0.2, groundY - h*0.9);
+  cx.lineTo(x + w*0.35, groundY - h*0.55);
+  cx.closePath(); cx.fill();
+  cx.fillStyle = '#1a1a1a';
+  cx.beginPath(); cx.arc(x - w*0.3, groundY, h*0.25, 0, Math.PI*2); cx.fill();
+  cx.beginPath(); cx.arc(x + w*0.3, groundY, h*0.25, 0, Math.PI*2); cx.fill();
+}
 function drawRocket(cx, x, groundY, h, t){
   cx.fillStyle = '#e8e8f0';
   cx.beginPath();
@@ -2369,10 +2834,8 @@ function drawFog(cx, W, H, t, alpha){
     cx.fillRect(x - w, y - 100, w * 2, 200);
   }
 }
-
-/* ---- Master scene renderer (now accepts search context) ---- */
-function renderAIScene(cx, W, H, prompt, t, mood, ctx){
-  const sc = detectScene(prompt, ctx);
+function renderAIScene(cx, W, H, prompt, t, mood, ctx2){
+  const sc = detectScene(prompt, ctx2);
   if (mood === 'night'){ sc.night = true; sc.sunset = false; sc.snow = false; sc.storm = false; sc.space = false; sc.aurora = false; }
   else if (mood === 'sunset'){ sc.sunset = true; sc.night = false; sc.snow = false; sc.storm = false; sc.space = false; sc.aurora = false; }
   else if (mood === 'day'){ sc.night = false; sc.sunset = false; sc.storm = false; sc.snow = false; sc.space = false; sc.aurora = false; }
@@ -2382,9 +2845,7 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
 
   const horizonY = H * 0.62;
   const groundY = H * 0.72;
-
   drawSky(cx, W, H, sc, t);
-
   if (sc.space){
     drawStars(cx, W, H * 0.9, t, 300);
     for (let i = 0; i < 6; i++){
@@ -2399,33 +2860,25 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
     }
   }
   if (sc.night && !sc.space) drawStars(cx, W, H * 0.75, t, 150);
-  if (sc.aurora){
-    drawStars(cx, W, H * 0.75, t, 120);
-    drawAurora(cx, W, H, t);
-  }
+  if (sc.aurora){ drawStars(cx, W, H * 0.75, t, 120); drawAurora(cx, W, H, t); }
   if (sc.moon || (sc.night && !sc.sun)) drawMoon(cx, W, H, t);
   if (sc.sun || (!sc.night && !sc.space && !sc.aurora)) drawSun(cx, W, H, t, sc.sunset || sc.sunrise);
-
   if (!sc.space){
     const cloudCount = sc.storm ? 8 : 4;
     for (let i = 0; i < cloudCount; i++){
       const cx1 = (hash(i * 3.3) * W + t * 12 * (0.5 + hash(i))) % (W + 250) - 150;
       const cy1 = H * (0.05 + hash(i * 5.7) * 0.22);
       const cs = 0.6 + hash(i * 7.1) * 0.9;
-      const alpha = sc.storm ? 0.9 : 0.8;
-      drawCloud(cx, cx1, cy1, cs, alpha);
+      drawCloud(cx, cx1, cy1, cs, sc.storm ? 0.9 : 0.8);
     }
   }
-
   if (sc.mountains || sc.forest || sc.beach || sc.ocean || sc.ice){
     const mColor = sc.night ? '#161c28' : sc.snow ? '#c8d4e0' : sc.sunset ? '#4a3a52' : '#5a6a80';
     drawMountains(cx, W, H, horizonY, mColor, 7, 6);
   }
   if (sc.city) drawCity(cx, W, H, horizonY + 30, 100);
-
   if (sc.ocean || sc.beach || sc.fish || /water|sea|lake|ocean|beach|underwater|reef|coral/.test(prompt.toLowerCase()))
     drawOcean(cx, W, H, horizonY, t, sc.night);
-
   const isFullWater = sc.ocean && !sc.beach;
   if (!isFullWater){
     let kind = 'grass';
@@ -2434,7 +2887,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
     else if (sc.fire) kind = 'lava';
     drawGround(cx, W, H, groundY, kind, t);
   }
-
   if (sc.forest || sc.tree){
     const treeColor = sc.night ? '#0a1a0a' : sc.snow ? '#1a3a2a' : '#1a5a2a';
     const n = 9;
@@ -2444,14 +2896,12 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
       drawTree(cx, x, groundY + 30, h, treeColor);
     }
   }
-
   if (sc.house) drawHouse(cx, W * 0.35, groundY + 40, 220, t);
   if (sc.car) drawCar(cx, W * 0.7, groundY + 50, 250, pick(['#d04040','#4080d0','#40b060','#e0a030','#a040c0']));
   if (sc.rocket) drawRocket(cx, W * 0.5, groundY + 30, 220, t);
   if (sc.boat) drawBoat(cx, W * 0.55, horizonY + 60, 200, t);
   if (sc.cat) drawCat(cx, W * 0.4, groundY + 55, 90, sc.night ? '#1a1a1a' : (sc.tropical ? '#e08030' : '#c06030'));
   if (sc.dog) drawDog(cx, W * 0.6, groundY + 55, 100, '#8a5a2a');
-
   if (sc.fish || sc.ocean){
     for (let i = 0; i < 5; i++){
       const fx = (hash(i * 3.3) * W + t * 40 * (1 + hash(i))) % (W + 120) - 60;
@@ -2461,7 +2911,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
       drawFish(cx, fx, fy, sz, `hsl(${hue},70%,60%)`, t);
     }
   }
-
   const birdCount = sc.bird ? 10 : (sc.night ? 0 : 4);
   for (let i = 0; i < birdCount; i++){
     const bx = (hash(i * 3.3) * W + t * 70 * (0.5 + hash(i))) % (W + 120) - 60;
@@ -2469,7 +2918,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
     const bs = 8 + hash(i * 7.1) * 12;
     drawBird(cx, bx, by, bs, sc.night ? '#333' : '#1a1a1a', t * 8 + i);
   }
-
   if (sc.butterfly){
     for (let i = 0; i < 8; i++){
       const bx = (hash(i * 3.3) * W + Math.sin(t * 0.6 + i) * 80) % W;
@@ -2478,7 +2926,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
       drawButterfly(cx, bx, by, bs, hash(i * 11) * 360, t * 6 + i);
     }
   }
-
   if (sc.flower){
     for (let i = 0; i < 10; i++){
       const fx = W * (0.05 + hash(i * 3.3) * 0.9);
@@ -2488,7 +2935,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
       drawFlower(cx, fx, fy, fs, `hsl(${hue},80%,65%)`, '#ffd94a', t + i);
     }
   }
-
   if (sc.heart){
     for (let i = 0; i < 6; i++){
       const hx = W * (0.15 + hash(i * 3.3) * 0.7);
@@ -2497,7 +2943,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
       drawHeart(cx, hx, hy, hs, `hsl(${340 + hash(i * 11) * 30},80%,65%)`);
     }
   }
-
   if (sc.balloon){
     for (let i = 0; i < 7; i++){
       const bx = W * (0.12 + hash(i * 3.3) * 0.76);
@@ -2506,22 +2951,14 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
       drawBalloon(cx, bx, by, bs, hash(i * 11) * 360, t + i);
     }
   }
-
   if (sc.person){
     drawPerson(cx, W * 0.3, groundY + 50, 140, sc.night ? '#0a0a0a' : 'rgba(30,30,40,0.95)');
     drawPerson(cx, W * 0.36, groundY + 50, 125, sc.night ? '#0a0a0a' : 'rgba(30,30,40,0.95)');
   }
-
-  if (sc.fire){
-    drawFireParticles(cx, W, H, t, 140);
-    cx.fillStyle = 'rgba(255,100,30,0.1)';
-    cx.fillRect(0, 0, W, H);
-  }
-
+  if (sc.fire){ drawFireParticles(cx, W, H, t, 140); cx.fillStyle = 'rgba(255,100,30,0.1)'; cx.fillRect(0, 0, W, H); }
   if (sc.rain || sc.storm) drawRain(cx, W, H, t, 250);
   if (sc.snow) drawSnowfall(cx, W, H, t, 250);
   if (sc.storm || sc.snow) drawFog(cx, W, H, t, 0.15);
-
   if (sc.sunset || sc.sunrise){
     const overlay = cx.createLinearGradient(0, H * 0.3, 0, H);
     overlay.addColorStop(0, 'rgba(255,150,80,0)');
@@ -2529,7 +2966,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
     overlay.addColorStop(1, 'rgba(255,80,40,0.16)');
     cx.fillStyle = overlay; cx.fillRect(0, 0, W, H);
   }
-
   const vg = cx.createRadialGradient(W/2, H/2, Math.min(W, H) * 0.3,
                                       W/2, H/2, Math.max(W, H) * 0.75);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
@@ -2538,57 +2974,7 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx){
   cx.fillRect(0, 0, W, H);
 }
 
-/* Missing scene helpers referenced above */
-function drawHouse(cx, x, groundY, w, t){
-  const h = w * 0.7;
-  cx.fillStyle = '#c8a878';
-  cx.fillRect(x - w/2, groundY - h*0.7, w, h*0.7);
-  cx.fillStyle = '#a03a2a';
-  cx.beginPath();
-  cx.moveTo(x - w*0.55, groundY - h*0.7);
-  cx.lineTo(x, groundY - h);
-  cx.lineTo(x + w*0.55, groundY - h*0.7);
-  cx.closePath(); cx.fill();
-  cx.fillStyle = '#5a3a1a';
-  cx.fillRect(x - w*0.08, groundY - h*0.4, w*0.16, h*0.4);
-  cx.fillStyle = '#4a6a9a';
-  cx.fillRect(x - w*0.35, groundY - h*0.55, w*0.15, h*0.2);
-  cx.fillRect(x + w*0.2, groundY - h*0.55, w*0.15, h*0.2);
-  cx.fillStyle = 'rgba(220,220,220,0.5)';
-  for (let i = 0; i < 3; i++){
-    const offset = (t * 40 + i * 15) % 60;
-    cx.beginPath();
-    cx.arc(x + w*0.25 + Math.sin(t + i) * 5, groundY - h - offset, 6 + i * 2, 0, Math.PI*2);
-    cx.fill();
-  }
-}
-function drawCar(cx, x, groundY, w, color){
-  const h = w * 0.5;
-  cx.fillStyle = color;
-  cx.beginPath();
-  cx.moveTo(x - w/2, groundY);
-  cx.lineTo(x - w/2, groundY - h*0.5);
-  cx.quadraticCurveTo(x - w/2, groundY - h, x - w*0.2, groundY - h);
-  cx.lineTo(x + w*0.2, groundY - h);
-  cx.quadraticCurveTo(x + w/2, groundY - h, x + w/2, groundY - h*0.5);
-  cx.lineTo(x + w/2, groundY);
-  cx.closePath(); cx.fill();
-  cx.fillStyle = 'rgba(150,200,240,0.9)';
-  cx.beginPath();
-  cx.moveTo(x - w*0.35, groundY - h*0.55);
-  cx.lineTo(x - w*0.2, groundY - h*0.9);
-  cx.lineTo(x + w*0.2, groundY - h*0.9);
-  cx.lineTo(x + w*0.35, groundY - h*0.55);
-  cx.closePath(); cx.fill();
-  cx.fillStyle = '#1a1a1a';
-  cx.beginPath(); cx.arc(x - w*0.3, groundY, h*0.25, 0, Math.PI*2); cx.fill();
-  cx.beginPath(); cx.arc(x + w*0.3, groundY, h*0.25, 0, Math.PI*2); cx.fill();
-  cx.fillStyle = '#666';
-  cx.beginPath(); cx.arc(x - w*0.3, groundY, h*0.1, 0, Math.PI*2); cx.fill();
-  cx.beginPath(); cx.arc(x + w*0.3, groundY, h*0.1, 0, Math.PI*2); cx.fill();
-}
-
-/* ---- Text generator ---- */
+/* ---- AI text ---- */
 const AI_WORDS = {
   cinematic: {
     open:['In the fading light','Beyond the veil of silence','When the world went quiet',
@@ -2630,39 +3016,31 @@ function detectMoodText(prompt){
   if (/motivat|inspir|quote|success|hustle|grind/.test(p)) return 'motivational';
   return 'cinematic';
 }
-function generateLocalText(prompt, ctx){
+function generateLocalText(prompt, ctx2){
   const bank = AI_WORDS[detectMoodText(prompt)];
   const o = pick(bank.open), m = pick(bank.mid), c = pick(bank.close);
-  // Use search keywords if we have them
-  const kw = ctx && ctx.keywords && ctx.keywords.length ? ctx.keywords : [];
+  const kw = ctx2 && ctx2.keywords && ctx2.keywords.length ? ctx2.keywords : [];
   const topic = kw[0] || (prompt || '').trim().split(/\s+/).find(w => w.length > 4);
-  if (topic && Math.random() > 0.35){
-    return `${o} — ${m} of ${topic.toLowerCase()} ${c}`;
-  }
+  if (topic && Math.random() > 0.35) return `${o} — ${m} of ${topic.toLowerCase()} ${c}`;
   return `${o}, ${m} ${c}`;
 }
-
-/* ---- AI generators ---- */
-async function aiGenerateText(prompt, ctx){
+async function aiGenerateText(prompt, ctx2){
   const useApi = $('#aiUseApi').checked;
   const key = localStorage.getItem('videoeditor_openai_key');
   if (useApi && key){
     setAiStatus('Contacting OpenAI…', 'busy');
     try{
-      const sys = ctx && ctx.summary
-        ? `You write short punchy video titles. Context: ${ctx.summary.slice(0, 400)}`
+      const sys = ctx2 && ctx2.summary
+        ? `You write short punchy video titles. Context: ${ctx2.summary.slice(0, 400)}`
         : 'You write short punchy video titles.';
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
+        body: JSON.stringify({ model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: sys + ' Return only the text, no quotes, under 20 words.' },
             { role: 'user', content: prompt || 'A cinematic title' }
-          ],
-          max_tokens: 60
-        })
+          ], max_tokens: 60 })
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
@@ -2674,17 +3052,16 @@ async function aiGenerateText(prompt, ctx){
   }
   setAiStatus('Writing text…', 'busy');
   await new Promise(r => setTimeout(r, 300));
-  return generateLocalText(prompt, ctx);
+  return generateLocalText(prompt, ctx2);
 }
-async function aiGenerateImage(prompt, style, ctx){
+async function aiGenerateImage(prompt, style, ctx2){
   const useApi = $('#aiUseApi').checked;
   const key = localStorage.getItem('videoeditor_openai_key');
   if (useApi && key){
     setAiStatus('Contacting DALL·E…', 'busy');
     try{
-      const fullPrompt = ctx && ctx.summary
-        ? `${prompt}. Context: ${ctx.summary.slice(0, 200)}`
-        : prompt;
+      const fullPrompt = ctx2 && ctx2.summary
+        ? `${prompt}. Context: ${ctx2.summary.slice(0, 200)}` : prompt;
       const res = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
@@ -2708,7 +3085,7 @@ async function aiGenerateImage(prompt, style, ctx){
   const cx = c.getContext('2d');
   const frames = 8;
   for (let f = 0; f < frames; f++){
-    renderAIScene(cx, W, H, prompt, f * 0.08, style, ctx);
+    renderAIScene(cx, W, H, prompt, f * 0.08, style, ctx2);
     setProgress((f / frames) * 100);
     await new Promise(r => requestAnimationFrame(r));
   }
@@ -2718,7 +3095,7 @@ async function aiGenerateImage(prompt, style, ctx){
   await el.decode();
   return el;
 }
-async function aiGenerateVideo(prompt, style, duration, ctx){
+async function aiGenerateVideo(prompt, style, duration, ctx2){
   setAiStatus('Recording video…', 'busy');
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -2734,7 +3111,7 @@ async function aiGenerateVideo(prompt, style, duration, ctx){
   const start = performance.now();
   const drawLoop = () => {
     const t = (performance.now() - start) / 1000;
-    renderAIScene(cx, W, H, prompt, t, style, ctx);
+    renderAIScene(cx, W, H, prompt, t, style, ctx2);
     setProgress(Math.min(100, (t / duration) * 100));
     if (t < duration) requestAnimationFrame(drawLoop);
     else { setProgress(100); setTimeout(() => rec.stop(), 120); }
@@ -2753,11 +3130,11 @@ async function aiGenerateVideo(prompt, style, duration, ctx){
   });
   return { el, url, duration: el.duration || duration };
 }
-function aiGenerateDraw(prompt, style, ctx){
+function aiGenerateDraw(prompt, style, ctx2){
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const cx = c.getContext('2d');
-  renderAIScene(cx, W, H, prompt, 0, style, ctx);
+  renderAIScene(cx, W, H, prompt, 0, style, ctx2);
   const imgData = cx.getImageData(0, 0, W, H);
   const d = imgData.data;
   const orig = new Uint8ClampedArray(d);
@@ -2797,8 +3174,10 @@ $$('.aiTypeBtn').forEach(b => {
     $('#aiDurRow').style.display = aiType === 'video' ? 'flex' : 'none';
   };
 });
-$('#openAiBtn').onclick = () => switchTab('ai');
-
+$('#openAiBtn').onclick = () => {
+  switchTab('ai');
+  if (isPhone()) openDrawer('left');
+};
 const KEY_FIELDS = [['apiKeyOpenAI', 'videoeditor_openai_key']];
 KEY_FIELDS.forEach(([id, lsKey]) => {
   const el = document.getElementById(id);
@@ -2807,12 +3186,9 @@ KEY_FIELDS.forEach(([id, lsKey]) => {
 });
 $('#aiUseApi').checked = localStorage.getItem('videoeditor_use_api') === '1';
 $('#aiUseApi').onchange = e => localStorage.setItem('videoeditor_use_api', e.target.checked ? '1' : '0');
-
-// Smart search preference
 $('#aiSmartSearch').checked = localStorage.getItem('videoeditor_smart_search') !== '0';
 $('#aiSmartSearch').onchange = e =>
   localStorage.setItem('videoeditor_smart_search', e.target.checked ? '1' : '0');
-
 function setAiStatus(msg, kind){
   const el = $('#aiStatus');
   el.textContent = msg; el.className = kind || '';
@@ -2825,16 +3201,10 @@ function setProgress(pct){
   bar.style.width = Math.min(100, pct) + '%';
   if (pct >= 100) setTimeout(() => wrap.classList.remove('show'), 500);
 }
-
-// Toggle search results panel
 $('#srToggle').onclick = () => $('#srBody').classList.toggle('hidden');
-
-// Example chips
 $$('.aiExChip').forEach(chip => {
   chip.onclick = () => { $('#aiPrompt').value = chip.textContent; };
 });
-
-// Do a search
 async function doSearch(){
   const prompt = $('#aiPrompt').value.trim();
   if (!prompt){ setAiStatus('Type a prompt first.', 'err'); return null; }
@@ -2844,51 +3214,39 @@ async function doSearch(){
   setProgress(100);
   state.search = data;
   renderSearchPanel(data);
-  const imgCount = data.images.length;
-  const relCount = data.related.length;
-  setAiStatus(`✓ Found "${data.title}" · ${imgCount} photos · ${relCount} related pages`, 'ok');
+  setAiStatus(`✓ Found "${data.title}" · ${data.images.length} photos · ${data.related.length} related`, 'ok');
   return data;
 }
-
 $('#aiSearchBtn').onclick = doSearch;
-
-// Main Generate
 $('#aiGenBtn').onclick = async () => {
   const prompt = $('#aiPrompt').value.trim();
   const style = $('#aiStyle').value;
   const duration = +$('#aiDuration').value;
   const useSearch = $('#aiSmartSearch').checked;
   const btn = $('#aiGenBtn');
-
   if (!prompt){ setAiStatus('Type a prompt first, then hit Generate.', 'err'); return; }
-
-  btn.disabled = true;
-  btn.textContent = '✨ Generating…';
+  btn.disabled = true; btn.textContent = '✨ …';
   setProgress(0);
-
   try{
-    let ctx = null;
+    let ctx2 = null;
     if (useSearch){
-      // Reuse last search if it matches; else run a fresh one
-      if (state.search && state.search._prompt === prompt){
-        ctx = state.search;
-      } else {
+      if (state.search && state.search._prompt === prompt) ctx2 = state.search;
+      else {
         setAiStatus('🔍 Searching for context…', 'search');
-        ctx = await smartSearch(prompt);
-        ctx._prompt = prompt;
-        state.search = ctx;
-        renderSearchPanel(ctx);
+        ctx2 = await smartSearch(prompt);
+        ctx2._prompt = prompt;
+        state.search = ctx2;
+        renderSearchPanel(ctx2);
       }
     }
-
     if (aiType === 'text'){
-      const text = await aiGenerateText(prompt, ctx);
-      setAiStatus('✓ Text generated — added to timeline.', 'ok');
+      const text = await aiGenerateText(prompt, ctx2);
+      setAiStatus('✓ Text generated.', 'ok');
       addTextClip('title', text);
       switchTab('media');
-    }
-    else if (aiType === 'image'){
-      const el = await aiGenerateImage(prompt, style, ctx);
+      if (isPhone()) closeDrawers();
+    } else if (aiType === 'image'){
+      const el = await aiGenerateImage(prompt, style, ctx2);
       const c = document.createElement('canvas');
       c.width = 128; c.height = 72;
       const cc = c.getContext('2d');
@@ -2900,11 +3258,11 @@ $('#aiGenBtn').onclick = async () => {
         duration: 5, w: el.naturalWidth || W, h: el.naturalHeight || H,
         thumb, ready: true, ai: true
       });
-      setAiStatus('✓ Image ready — click it in MEDIA.', 'ok');
+      setAiStatus('✓ Image ready.', 'ok');
       switchTab('media');
-    }
-    else if (aiType === 'video'){
-      const { el, url, duration: realDur } = await aiGenerateVideo(prompt, style, duration, ctx);
+      if (isPhone()) closeDrawers();
+    } else if (aiType === 'video'){
+      const { el, url, duration: realDur } = await aiGenerateVideo(prompt, style, duration, ctx2);
       const c = document.createElement('canvas');
       c.width = 128; c.height = 72;
       const cc = c.getContext('2d');
@@ -2916,13 +3274,13 @@ $('#aiGenBtn').onclick = async () => {
         duration: realDur, w: 1280, h: 720,
         thumb, ready: true, ai: true
       });
-      setAiStatus('✓ Video ready — click it in MEDIA.', 'ok');
+      setAiStatus('✓ Video ready.', 'ok');
       switchTab('media');
-    }
-    else if (aiType === 'draw'){
+      if (isPhone()) closeDrawers();
+    } else if (aiType === 'draw'){
       setAiStatus('Sketching scene…', 'busy');
       await new Promise(r => setTimeout(r, 250));
-      const el = await aiGenerateDraw(prompt, style, ctx);
+      const el = await aiGenerateDraw(prompt, style, ctx2);
       const c = document.createElement('canvas');
       c.width = 128; c.height = 72;
       const cc = c.getContext('2d');
@@ -2934,8 +3292,9 @@ $('#aiGenBtn').onclick = async () => {
         duration: 5, w: W, h: H,
         thumb, ready: true, ai: true
       });
-      setAiStatus('✓ Drawing ready — click it in MEDIA.', 'ok');
+      setAiStatus('✓ Drawing ready.', 'ok');
       switchTab('media');
+      if (isPhone()) closeDrawers();
     }
   } catch(err){
     console.error(err);
@@ -2948,36 +3307,30 @@ $('#aiGenBtn').onclick = async () => {
 };
 
 /* =========================================================
-   20. Wiring the UI
+   20. Wiring
    ========================================================= */
 $('#importBtn').onclick = () => $('#fileInput').click();
 $('#fileInput').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
 $('#dropzone').onclick = () => $('#fileInput').click();
 $('#recBtn').onclick = toggleVoiceRecording;
-
 document.addEventListener('dragover', e => { e.preventDefault(); $('#dropzone').classList.add('over'); });
 document.addEventListener('dragleave', e => { if (e.relatedTarget === null) $('#dropzone').classList.remove('over'); });
 document.addEventListener('drop', e => {
   e.preventDefault(); $('#dropzone').classList.remove('over');
   if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
 });
-
 $('#mediaList').addEventListener('click', e => {
   const item = e.target.closest('.mediaItem'); if (!item) return;
   addMediaClip(item.dataset.id);
 });
-
 $$('.tab').forEach(t => { t.onclick = () => switchTab(t.dataset.tab); });
 $$('.presetBtn').forEach(b => { b.onclick = () => addTextClip(b.dataset.preset); });
-
 $('#playBtn').onclick = () => setPlaying(!state.playing);
 $('#toStart').onclick = () => { setPlaying(false); setPlayhead(0); };
 $('#toEnd').onclick = () => { setPlaying(false); setPlayhead(totalDuration()); };
-
 $('#splitBtn').onclick = splitSelected;
 $('#dupBtn').onclick = duplicateSelected;
 $('#delBtn').onclick = deleteSelected;
-
 function setZoom(pps){
   state.pps = clamp(pps, 16, 400);
   $('#zoomLabel').textContent = Math.round(state.pps / 80 * 100) + '%';
@@ -2985,9 +3338,6 @@ function setZoom(pps){
 }
 $('#zoomIn').onclick = () => setZoom(state.pps * 1.35);
 $('#zoomOut').onclick = () => setZoom(state.pps / 1.35);
-
-$('#exportBtn').onclick = exportVideo;
-
 window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
@@ -3001,12 +3351,17 @@ window.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft'){ setPlaying(false); setPlayhead(state.playhead - (e.shiftKey ? 1 : 1/30)); }
   else if (e.key === 'ArrowRight'){ setPlaying(false); setPlayhead(state.playhead + (e.shiftKey ? 1 : 1/30)); }
 });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('touchmove', e => {
+  if (e.target.closest('#lanesScroll, .tabPane, #right, .srBody, .panelTabs, #tlToolbar')) return;
+  if (e.touches.length > 1) e.preventDefault();
+}, {passive:false});
 
 /* =========================================================
    21. Boot
    ========================================================= */
 buildFxPanels();
-setZoom(80);
+setZoom(isPhone() ? 55 : 80);
 renderTimeline();
 renderProps();
 </script>
