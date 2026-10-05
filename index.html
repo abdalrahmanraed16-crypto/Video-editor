@@ -119,6 +119,7 @@
   .fxSectionTitle{font-size:11px;text-transform:uppercase;letter-spacing:.7px;
     color:var(--muted);font-weight:800;margin:0 0 8px}
   #kitsGrid, #effectsGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  #transGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
   .kitBtn{background:var(--panel2);border:1px solid var(--line);color:var(--text);
     border-radius:8px;padding:8px;cursor:pointer;font-size:11px;text-align:left;
     transition:.15s;font-weight:700;line-height:1.3}
@@ -132,6 +133,13 @@
   .fxBtn:hover{border-color:var(--accent);background:#242b3d}
   .fxBtn .fxIcon{font-size:16px;display:block;margin-bottom:2px}
   .fxBtn.active{border-color:var(--accent);background:rgba(108,92,231,.22)}
+  .transBtn{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:7px;padding:7px 3px;cursor:pointer;font-size:9px;text-align:center;
+    transition:.15s;font-weight:600;min-height:50px;line-height:1.15}
+  .transBtn:hover{border-color:#f59e0b;background:#2a2418}
+  .transBtn .transIcon{font-size:15px;display:block;margin-bottom:2px}
+  .transBtn.active{border-color:#f59e0b;background:rgba(245,158,11,.2);color:#fcd34d}
+
   .fxRow{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
     padding:6px 8px;margin-bottom:5px;font-size:11px}
   .fxRowHead{display:flex;justify-content:space-between;align-items:center;
@@ -155,6 +163,14 @@
   .muted{color:var(--muted);font-size:12px;line-height:1.6}
   .infoLine{font-size:11px;color:var(--muted);margin-top:14px;padding-top:12px;
     border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+
+  .transitionSection{margin-top:16px;padding:12px;border-radius:10px;
+    background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(239,68,68,.06));
+    border:1px solid rgba(245,158,11,.35)}
+  .transitionSection h4{margin:0 0 8px;font-size:11px;font-weight:800;
+    letter-spacing:.5px;color:#fcd34d;text-transform:uppercase}
+  .transitionSection .noPrev{font-size:11px;color:var(--muted);line-height:1.5;
+    font-style:italic}
 
   .aiHeader{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(236,72,153,.14));
     border:1px solid rgba(139,92,246,.35);border-radius:10px;padding:10px 12px;margin-bottom:12px}
@@ -329,6 +345,11 @@
     background:linear-gradient(135deg,var(--ai3),#0891b2);
     color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;
     pointer-events:none;z-index:3}
+  .clip .transIndicator{position:absolute;top:0;left:0;bottom:0;width:26px;
+    background:linear-gradient(90deg,rgba(245,158,11,.85),rgba(245,158,11,.05));
+    pointer-events:none;z-index:2;
+    display:flex;align-items:center;justify-content:flex-start;
+    font-size:13px;padding-left:4px;text-shadow:0 1px 3px rgba(0,0,0,.7)}
   #playhead{position:absolute;top:0;bottom:0;width:2px;background:#ff4d6d;
     pointer-events:none;z-index:6;box-shadow:0 0 8px rgba(255,77,109,.7)}
   #playhead::before{content:'';position:absolute;top:0;left:-5px;width:12px;
@@ -369,7 +390,6 @@
   .drawToolbar label{font-size:11px;color:var(--muted);font-weight:700;
     text-transform:uppercase;letter-spacing:.5px}
 
-  /* ---- Export modal ---- */
   #exportModal .modalContent{width:min(94vw,520px)}
   .fmtOption{display:flex;gap:12px;align-items:flex-start;padding:14px;
     border:1.5px solid var(--line);border-radius:10px;cursor:pointer;margin-bottom:10px;
@@ -447,6 +467,7 @@
     .modalContent{padding:10px;border-radius:10px;max-height:98vh}
     #drawCanvas{max-height:60vh}
     .srImagesGrid{grid-template-columns:1fr 1fr}
+    #transGrid{grid-template-columns:1fr 1fr 1fr 1fr}
   }
   @media (max-width: 420px){
     :root{ --timeline-h:150px; }
@@ -502,6 +523,7 @@
         <button class="tab" data-tab="text">TEXT</button>
         <button class="tab" data-tab="draw">DRAW</button>
         <button class="tab" data-tab="fx">FX</button>
+        <button class="tab" data-tab="trans">TRANS</button>
         <button class="tab aiTab" data-tab="ai">✨ AI</button>
       </div>
 
@@ -527,6 +549,31 @@
         <div id="kitsGrid"></div>
         <div class="fxSectionTitle" style="margin-top:16px">Individual effects</div>
         <div id="effectsGrid"></div>
+      </div>
+
+      <div class="tabPane hidden" id="tab-trans">
+        <div class="fxSectionTitle">Transitions</div>
+        <p class="muted" style="margin-top:0;font-size:11px;margin-bottom:10px">
+          Applied to the <b>start</b> of the selected clip. The previous clip on the same track must touch this clip's start.
+        </p>
+        <div id="transGrid"></div>
+        <div class="fxHint" style="margin-top:14px">
+          <b>How to use:</b><br>
+          1. Place two clips so one ends exactly when the next starts.<br>
+          2. Select the second clip.<br>
+          3. Click a transition above.<br>
+          4. Adjust duration in Properties (right panel).
+        </div>
+        <div class="transitionSection" style="margin-top:16px">
+          <h4>Apply to all</h4>
+          <div style="display:flex;gap:6px">
+            <select id="transAllSelect" style="flex:1;background:var(--panel2);
+              border:1px solid var(--line);color:var(--text);border-radius:6px;
+              padding:7px;font-size:12px;font-family:inherit"></select>
+            <button class="btn sm" id="transAllApply" style="background:#f59e0b;
+              border-color:#f59e0b;color:#fff">Apply</button>
+          </div>
+        </div>
       </div>
 
       <div class="tabPane hidden" id="tab-ai">
@@ -569,7 +616,7 @@
           </select>
         </div>
         <div class="aiBtnRow">
-          <button class="aiSearchBtn" id="aiSearchBtn" title="Search only">🔍 Search</button>
+          <button class="aiSearchBtn" id="aiSearchBtn">🔍 Search</button>
           <button class="aiGenBtn" id="aiGenBtn">✨ Generate</button>
         </div>
         <div id="aiStatus">Ready.</div>
@@ -595,8 +642,6 @@
           <span class="aiExChip">hawaii volcano</span>
           <span class="aiExChip">northern lights</span>
           <span class="aiExChip">grand canyon</span>
-          <span class="aiExChip">snow leopard</span>
-          <span class="aiExChip">cherry blossom japan</span>
         </div>
         <details class="aiSettings">
           <summary>Use real AI APIs (optional)</summary>
@@ -664,7 +709,6 @@
 
 <div id="drawerBackdrop"></div>
 
-<!-- Draw modal -->
 <div class="modal hidden" id="drawModal">
   <div class="modalContent">
     <div class="modalHeader">
@@ -687,7 +731,6 @@
   </div>
 </div>
 
-<!-- Export modal -->
 <div class="modal hidden" id="exportModal">
   <div class="modalContent">
     <div class="modalHeader">
@@ -699,19 +742,18 @@
         <div class="fmtIcon">🎬</div>
         <div class="fmtInfo">
           <div class="fmtName">MP4 <span class="fmtBadge universal">WORKS EVERYWHERE</span></div>
-          <div class="fmtDesc">Plays on iPhone, Android, Windows Media Player, QuickTime, TV, and every social platform. Takes 1–2× longer since it re-encodes in your browser.</div>
+          <div class="fmtDesc">Plays on iPhone, Android, Windows Media Player, QuickTime, TVs, and every social platform. Takes 1–2× longer since it re-encodes in your browser.</div>
         </div>
       </div>
       <div class="fmtOption" data-fmt="webm">
         <div class="fmtIcon">⚡</div>
         <div class="fmtInfo">
           <div class="fmtName">WebM <span class="fmtBadge fast">FAST</span></div>
-          <div class="fmtDesc">Instant export. Plays in VLC, Chrome, Edge, Firefox, and Windows Movies & TV. May not open on iPhone or in QuickTime.</div>
+          <div class="fmtDesc">Instant export. Plays in VLC, Chrome, Edge, Firefox, Windows Movies & TV. May not open on iPhone or in QuickTime.</div>
         </div>
       </div>
       <button class="actionBtn" id="startExport" style="margin-top:6px;margin-bottom:0">⬇ Export now</button>
     </div>
-
     <div id="exportProgress">
       <div class="epStep" id="epStep1"><span>🎥 Recording timeline</span><span id="epStep1Pct">0%</span></div>
       <div class="epBar"><div class="epBarFill" id="epBar1"></div></div>
@@ -726,7 +768,6 @@
   </div>
 </div>
 
-<!-- Export result modal -->
 <div class="modal hidden" id="resultModal">
   <div class="modalContent" style="width:min(94vw,640px)">
     <div class="modalHeader">
@@ -777,6 +818,41 @@ const FX_W = 640, FX_H = 360;
 const fxCanvas = document.createElement('canvas');
 fxCanvas.width = FX_W; fxCanvas.height = FX_H;
 const fxCtx = fxCanvas.getContext('2d', { willReadFrequently: true });
+
+// Offscreen canvases for transition rendering
+const tmpACanvas = document.createElement('canvas');
+tmpACanvas.width = W; tmpACanvas.height = H;
+const tmpACtx = tmpACanvas.getContext('2d');
+const tmpBCanvas = document.createElement('canvas');
+tmpBCanvas.width = W; tmpBCanvas.height = H;
+const tmpBCtx = tmpBCanvas.getContext('2d');
+
+/* =========================================================
+   TRANSITIONS catalog
+   ========================================================= */
+const TRANSITIONS = [
+  { type:'none',        label:'None',       icon:'—' },
+  { type:'fade',        label:'Crossfade',  icon:'🔀' },
+  { type:'fadeblack',   label:'Fade Black', icon:'⬛' },
+  { type:'fadewhite',   label:'Fade White', icon:'⬜' },
+  { type:'slideleft',   label:'Slide L',    icon:'⬅' },
+  { type:'slideright',  label:'Slide R',    icon:'➡' },
+  { type:'slideup',     label:'Slide Up',   icon:'⬆' },
+  { type:'slidedown',   label:'Slide Dn',   icon:'⬇' },
+  { type:'wipeleft',    label:'Wipe L',     icon:'◀' },
+  { type:'wiperight',   label:'Wipe R',     icon:'▶' },
+  { type:'wipeup',      label:'Wipe Up',    icon:'▲' },
+  { type:'wipedown',    label:'Wipe Dn',    icon:'▼' },
+  { type:'circleopen',  label:'Circle Open',icon:'⭕' },
+  { type:'circleclose', label:'Circle Close',icon:'🔵' },
+  { type:'zoomin',      label:'Zoom In',    icon:'🔍' },
+  { type:'zoomout',     label:'Zoom Out',   icon:'🔎' },
+  { type:'spin',        label:'Spin',       icon:'🔄' },
+  { type:'blur',        label:'Blur',       icon:'💨' },
+  { type:'glitch',      label:'Glitch',     icon:'⚡' },
+  { type:'mosaic',      label:'Mosaic',     icon:'🟦' }
+];
+const TRANS_LOOKUP = Object.fromEntries(TRANSITIONS.map(t => [t.type, t]));
 
 /* =========================================================
    KITS & EFFECTS
@@ -971,6 +1047,16 @@ function findFreeStart(track, desired, dur){
   }
   return t;
 }
+function getPrevAdjacentClip(c){
+  let best = null, bestGap = Infinity;
+  for (const x of state.clips){
+    if (x.id === c.id) continue;
+    if (x.track !== c.track) continue;
+    const gap = Math.abs((x.start + x.dur) - c.start);
+    if (gap < 0.08 && gap < bestGap){ best = x; bestGap = gap; }
+  }
+  return best;
+}
 function addMediaClip(mediaId){
   const m = state.media.find(x => x.id === mediaId);
   if (!m) return;
@@ -979,6 +1065,7 @@ function addMediaClip(mediaId){
   const start = findFreeStart(track, state.playhead, dur);
   const clip = { id: uid(), kind: 'media', mediaId, track, start, dur,
     in: 0, volume: 1, opacity: 1, fadeIn: 0, fadeOut: 0, effects: [],
+    transIn: { type:'none', dur: 0.5 },
     isAI: !!m.ai, isSearch: !!m.search };
   state.clips.push(clip); select(clip.id); renderTimeline();
   if (isPhone()) closeDrawers();
@@ -995,10 +1082,11 @@ function addTextClip(preset, customText){
   const start = findFreeStart(1, state.playhead, dur);
   const clip = { id: uid(), kind: 'text', track: 1, start, dur,
     text: cfg.text, fontSize: cfg.fontSize, color: cfg.color,
-    x: cfg.x, y: cfg.y, align: 'center', fadeIn: 0.3, fadeOut: 0.3, effects: [] };
+    x: cfg.x, y: cfg.y, align: 'center', fadeIn: 0.3, fadeOut: 0.3,
+    effects: [], transIn: { type:'none', dur: 0.5 } };
   state.clips.push(clip); select(clip.id); renderTimeline();
 }
-function select(id){ state.sel = id; renderTimeline(); renderProps(); renderFxGrid(); }
+function select(id){ state.sel = id; renderTimeline(); renderProps(); renderFxGrid(); renderTransGrid(); }
 
 /* =========================================================
    4. Timeline rendering
@@ -1026,7 +1114,11 @@ function renderTimeline(){
     let badge = '';
     if (c.isAI) badge = '<span class="aiBadge">✨ AI</span>';
     else if (c.isSearch) badge = '<span class="searchBadge">🔍 WEB</span>';
+    const transType = c.transIn?.type;
+    const hasTrans = transType && transType !== 'none';
+    const transIcon = hasTrans ? (TRANS_LOOKUP[transType]?.icon || '✨') : '';
     el.innerHTML = `<div class="handle left"></div>
+      ${hasTrans ? `<div class="transIndicator" title="Transition: ${TRANS_LOOKUP[transType]?.label || transType}">${transIcon}</div>` : ''}
       ${badge}
       ${fxCount ? `<span class="fxBadge">FX ${fxCount}</span>` : ''}
       <span class="clipLabel">${label}</span>
@@ -1132,7 +1224,8 @@ function splitSelected(){
   const t = state.playhead;
   if (t <= c.start + 0.05 || t >= c.start + c.dur - 0.05) return;
   const right = Object.assign({}, c, { id: uid(), start: t, dur: c.start + c.dur - t,
-    effects: (c.effects || []).map(e => ({ ...e })) });
+    effects: (c.effects || []).map(e => ({ ...e })),
+    transIn: c.transIn ? { ...c.transIn } : { type:'none', dur: 0.5 } });
   if (c.kind === 'media') right.in = (c.in || 0) + (t - c.start);
   c.dur = t - c.start;
   state.clips.push(right); select(right.id);
@@ -1140,12 +1233,13 @@ function splitSelected(){
 function deleteSelected(){
   if (!state.sel) return;
   state.clips = state.clips.filter(c => c.id !== state.sel);
-  state.sel = null; renderTimeline(); renderProps(); renderFxGrid();
+  state.sel = null; renderTimeline(); renderProps(); renderFxGrid(); renderTransGrid();
 }
 function duplicateSelected(){
   const c = state.clips.find(x => x.id === state.sel); if (!c) return;
   const copy = Object.assign({}, c, { id: uid(), start: c.start + c.dur,
-    effects: (c.effects || []).map(e => ({ ...e })) });
+    effects: (c.effects || []).map(e => ({ ...e })),
+    transIn: c.transIn ? { ...c.transIn } : { type:'none', dur: 0.5 } });
   state.clips.push(copy); select(copy.id);
 }
 
@@ -1173,6 +1267,33 @@ function applyKitToSelected(key){
   c.effects = kit.effects.map(e => ({ ...e }));
   renderTimeline(); renderProps(); renderFxGrid();
 }
+function applyTransitionToSelected(type){
+  const c = state.clips.find(x => x.id === state.sel);
+  if (!c){ toast('Select a clip first.'); return; }
+  if (!isFxCapable(c)){ toast('Transitions work on video/image/text clips.'); return; }
+  if (!c.transIn) c.transIn = { type:'none', dur: 0.5 };
+  c.transIn.type = type;
+  if (type === 'none'){ /* just clear */ }
+  else if (!c.transIn.dur || c.transIn.dur < 0.1) c.transIn.dur = 0.5;
+  renderTimeline(); renderProps(); renderTransGrid();
+  if (type !== 'none'){
+    const prev = getPrevAdjacentClip(c);
+    if (!prev) toast('No adjacent clip before this one — transition will show once clips touch.');
+  }
+}
+function applyTransitionToAll(type){
+  let count = 0;
+  for (const c of state.clips){
+    if (!isFxCapable(c)) continue;
+    const prev = getPrevAdjacentClip(c);
+    if (!prev) continue;
+    if (!c.transIn) c.transIn = { type:'none', dur: 0.5 };
+    c.transIn.type = type;
+    count++;
+  }
+  renderTimeline(); renderProps(); renderTransGrid();
+  toast(count ? `Applied to ${count} clip${count>1?'s':''}.` : 'No adjacent clip pairs found.');
+}
 let toastTimer = null;
 function toast(msg){
   let el = document.getElementById('toast');
@@ -1193,6 +1314,12 @@ function renderFxGrid(){
   const active = new Set((c && c.effects || []).map(e => e.type));
   $$('#effectsGrid .fxBtn').forEach(b => b.classList.toggle('active', active.has(b.dataset.type)));
 }
+function renderTransGrid(){
+  const c = state.clips.find(x => x.id === state.sel);
+  const activeType = c && c.transIn ? c.transIn.type : null;
+  $$('#transGrid .transBtn').forEach(b =>
+    b.classList.toggle('active', b.dataset.type === activeType));
+}
 function buildFxPanels(){
   $('#kitsGrid').innerHTML = Object.entries(KITS).map(([k, kit]) => `
     <button class="kitBtn" data-kit="${k}">
@@ -1204,8 +1331,21 @@ function buildFxPanels(){
     <button class="fxBtn" data-type="${e.type}" title="${e.desc}">
       <span class="fxIcon">${e.icon}</span>${e.label}
     </button>`).join('');
+  $('#transGrid').innerHTML = TRANSITIONS.map(t => `
+    <button class="transBtn" data-type="${t.type}" title="${t.label}">
+      <span class="transIcon">${t.icon}</span>${t.label}
+    </button>`).join('');
   $$('#kitsGrid .kitBtn').forEach(b => b.onclick = () => applyKitToSelected(b.dataset.kit));
   $$('#effectsGrid .fxBtn').forEach(b => b.onclick = () => addEffectToSelected(b.dataset.type));
+  $$('#transGrid .transBtn').forEach(b => b.onclick = () => applyTransitionToSelected(b.dataset.type));
+
+  // "Apply to all" dropdown
+  const sel = $('#transAllSelect');
+  if (sel){
+    sel.innerHTML = TRANSITIONS.map(t =>
+      `<option value="${t.type}">${t.icon} ${t.label}</option>`).join('');
+    $('#transAllApply').onclick = () => applyTransitionToAll(sel.value);
+  }
 }
 
 /* =========================================================
@@ -1324,7 +1464,7 @@ function applyPixelEffects(imageData, effects, t){
 }
 
 /* =========================================================
-   9. Preview rendering
+   9. Preview rendering (refactored with transitions)
    ========================================================= */
 function fadeAlpha(c, local){
   let a = c.opacity ?? 1;
@@ -1370,7 +1510,9 @@ function renderTextToCanvas(c){
   });
   return c._tc;
 }
-function drawSourceWithFx(source, sw, sh, c, localT){
+
+/* Refactored to accept a target context */
+function drawSourceWithFxOn(targetCtx, source, sw, sh, c, localT){
   const effects = c.effects || [];
   let extraAlpha = 1;
   for (const e of effects){
@@ -1405,82 +1547,330 @@ function drawSourceWithFx(source, sw, sh, c, localT){
     if (e.type === 'slowzoom'){ const s = 1 + inten * Math.min(1, localT / 4) * 0.4; sx *= s; sy *= s; }
     if (e.type === 'rotate') rot += localT * inten * 1.6;
   }
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.translate(W / 2 + ox, H / 2 + oy);
-  ctx.scale(sx, sy);
-  ctx.rotate(rot);
+  targetCtx.save();
+  targetCtx.globalAlpha = alpha;
+  targetCtx.translate(W / 2 + ox, H / 2 + oy);
+  targetCtx.scale(sx, sy);
+  targetCtx.rotate(rot);
   const scale = Math.min(W / renderW, H / renderH);
   const dw = renderW * scale, dh = renderH * scale;
-  try { ctx.drawImage(renderSrc, -dw / 2, -dh / 2, dw, dh); } catch(err){}
+  try { targetCtx.drawImage(renderSrc, -dw / 2, -dh / 2, dw, dh); } catch(err){}
   for (const e of effects){
     const inten = e.intensity ?? 0.6;
     if (e.type === 'vignette'){
-      const grd = ctx.createRadialGradient(0, 0, Math.min(dw, dh) * 0.28, 0, 0, Math.max(dw, dh) * 0.72);
+      const grd = targetCtx.createRadialGradient(0, 0, Math.min(dw, dh) * 0.28, 0, 0, Math.max(dw, dh) * 0.72);
       grd.addColorStop(0, 'rgba(0,0,0,0)');
       grd.addColorStop(1, `rgba(0,0,0,${inten * 0.92})`);
-      ctx.fillStyle = grd;
-      ctx.fillRect(-dw / 2, -dh / 2, dw, dh);
+      targetCtx.fillStyle = grd;
+      targetCtx.fillRect(-dw / 2, -dh / 2, dw, dh);
     } else if (e.type === 'bloom'){
       const a = inten * 0.32 * (0.8 + Math.sin(localT * 2) * 0.2);
-      const grd = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(dw, dh) * 0.65);
+      const grd = targetCtx.createRadialGradient(0, 0, 0, 0, 0, Math.max(dw, dh) * 0.65);
       grd.addColorStop(0, `rgba(255,255,255,${a})`);
       grd.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = grd;
-      ctx.fillRect(-dw / 2, -dh / 2, dw, dh);
+      targetCtx.fillStyle = grd;
+      targetCtx.fillRect(-dw / 2, -dh / 2, dw, dh);
     }
   }
-  ctx.restore();
+  targetCtx.restore();
 }
+
+/* Render a single clip (media or text) to any target context at local time */
+function renderClipTo(targetCtx, c, localT){
+  if (!c) return;
+  if (c.kind === 'media'){
+    const m = getMedia(c);
+    if (!m) return;
+    if (c.effects && c.effects.length){
+      drawSourceWithFxOn(targetCtx, m.el, m.w, m.h, c, localT);
+    } else {
+      targetCtx.save();
+      targetCtx.globalAlpha = fadeAlpha(c, localT);
+      const scale = Math.min(W / m.w, H / m.h);
+      const dw = m.w * scale, dh = m.h * scale;
+      try { targetCtx.drawImage(m.el, (W - dw) / 2, (H - dh) / 2, dw, dh); } catch(e){}
+      targetCtx.restore();
+    }
+  } else if (c.kind === 'text'){
+    if (c.effects && c.effects.length){
+      const tc = renderTextToCanvas(c);
+      drawSourceWithFxOn(targetCtx, tc, W, H, c, localT);
+    } else {
+      const size = c.fontSize || 64;
+      targetCtx.save();
+      targetCtx.globalAlpha = fadeAlpha(c, localT);
+      targetCtx.textAlign = c.align || 'center';
+      targetCtx.textBaseline = 'middle';
+      const x = W * (c.x ?? 50) / 100;
+      const y = H * (c.y ?? 50) / 100;
+      targetCtx.font = `800 ${size}px Inter, system-ui, sans-serif`;
+      const lines = wrapLinesForCtx(targetCtx, c.text || '', W * 0.88);
+      const lh = size * 1.18;
+      const top = y - (lines.length - 1) * lh / 2;
+      lines.forEach((ln, i) => {
+        targetCtx.lineWidth = Math.max(3, size / 11);
+        targetCtx.strokeStyle = 'rgba(0,0,0,.8)';
+        targetCtx.lineJoin = 'round';
+        targetCtx.strokeText(ln, x, top + i * lh);
+        targetCtx.fillStyle = c.color || '#fff';
+        targetCtx.fillText(ln, x, top + i * lh);
+      });
+      targetCtx.restore();
+    }
+  }
+}
+
+/* =========================================================
+   9b. Transition renderer
+   ========================================================= */
+function drawTransition(targetCtx, tA, tB, type, p){
+  const w = W, h = H;
+  p = clamp(p, 0, 1);
+  targetCtx.save();
+  targetCtx.setTransform(1, 0, 0, 1, 0, 0);
+  targetCtx.globalAlpha = 1;
+  targetCtx.globalCompositeOperation = 'source-over';
+  targetCtx.filter = 'none';
+
+  switch(type){
+    case 'fade':
+      targetCtx.globalAlpha = 1 - p;
+      targetCtx.drawImage(tA, 0, 0);
+      targetCtx.globalAlpha = p;
+      targetCtx.drawImage(tB, 0, 0);
+      break;
+
+    case 'fadeblack':
+      targetCtx.fillStyle = '#000';
+      targetCtx.fillRect(0, 0, w, h);
+      if (p < 0.5){
+        targetCtx.globalAlpha = 1 - p * 2;
+        targetCtx.drawImage(tA, 0, 0);
+      } else {
+        targetCtx.globalAlpha = (p - 0.5) * 2;
+        targetCtx.drawImage(tB, 0, 0);
+      }
+      break;
+
+    case 'fadewhite':
+      targetCtx.fillStyle = '#fff';
+      targetCtx.fillRect(0, 0, w, h);
+      if (p < 0.5){
+        targetCtx.globalAlpha = 1 - p * 2;
+        targetCtx.drawImage(tA, 0, 0);
+      } else {
+        targetCtx.globalAlpha = (p - 0.5) * 2;
+        targetCtx.drawImage(tB, 0, 0);
+      }
+      break;
+
+    case 'slideleft':
+      targetCtx.drawImage(tA, -p * w, 0);
+      targetCtx.drawImage(tB, (1 - p) * w, 0);
+      break;
+
+    case 'slideright':
+      targetCtx.drawImage(tA, p * w, 0);
+      targetCtx.drawImage(tB, -(1 - p) * w, 0);
+      break;
+
+    case 'slideup':
+      targetCtx.drawImage(tA, 0, -p * h);
+      targetCtx.drawImage(tB, 0, (1 - p) * h);
+      break;
+
+    case 'slidedown':
+      targetCtx.drawImage(tA, 0, p * h);
+      targetCtx.drawImage(tB, 0, -(1 - p) * h);
+      break;
+
+    case 'wipeleft':
+      targetCtx.drawImage(tA, 0, 0);
+      targetCtx.beginPath();
+      targetCtx.rect(w * (1 - p), 0, w * p, h);
+      targetCtx.clip();
+      targetCtx.drawImage(tB, 0, 0);
+      break;
+
+    case 'wiperight':
+      targetCtx.drawImage(tA, 0, 0);
+      targetCtx.beginPath();
+      targetCtx.rect(0, 0, w * p, h);
+      targetCtx.clip();
+      targetCtx.drawImage(tB, 0, 0);
+      break;
+
+    case 'wipeup':
+      targetCtx.drawImage(tA, 0, 0);
+      targetCtx.beginPath();
+      targetCtx.rect(0, h * (1 - p), w, h * p);
+      targetCtx.clip();
+      targetCtx.drawImage(tB, 0, 0);
+      break;
+
+    case 'wipedown':
+      targetCtx.drawImage(tA, 0, 0);
+      targetCtx.beginPath();
+      targetCtx.rect(0, 0, w, h * p);
+      targetCtx.clip();
+      targetCtx.drawImage(tB, 0, 0);
+      break;
+
+    case 'circleopen': {
+      targetCtx.drawImage(tA, 0, 0);
+      const r = Math.hypot(w, h) / 2 * p;
+      targetCtx.beginPath();
+      targetCtx.arc(w/2, h/2, r, 0, Math.PI * 2);
+      targetCtx.clip();
+      targetCtx.drawImage(tB, 0, 0);
+      break;
+    }
+
+    case 'circleclose': {
+      targetCtx.drawImage(tB, 0, 0);
+      const r = Math.hypot(w, h) / 2 * (1 - p);
+      targetCtx.beginPath();
+      targetCtx.arc(w/2, h/2, r, 0, Math.PI * 2);
+      targetCtx.clip();
+      targetCtx.drawImage(tA, 0, 0);
+      break;
+    }
+
+    case 'zoomin': {
+      targetCtx.globalAlpha = 1 - p;
+      targetCtx.drawImage(tA, 0, 0);
+      const s = 0.4 + p * 0.6;
+      targetCtx.globalAlpha = p;
+      const dw = w * s, dh = h * s;
+      targetCtx.drawImage(tB, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      break;
+    }
+
+    case 'zoomout': {
+      const s = 1 + p * 0.8;
+      targetCtx.globalAlpha = 1 - p;
+      const dw = w * s, dh = h * s;
+      targetCtx.drawImage(tA, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      targetCtx.globalAlpha = p;
+      targetCtx.drawImage(tB, 0, 0);
+      break;
+    }
+
+    case 'spin': {
+      targetCtx.globalAlpha = 1 - p;
+      targetCtx.translate(w/2, h/2);
+      targetCtx.rotate(p * Math.PI);
+      const sA = 1 - p * 0.6;
+      targetCtx.scale(sA, sA);
+      targetCtx.drawImage(tA, -w/2, -h/2);
+      targetCtx.setTransform(1, 0, 0, 1, 0, 0);
+      targetCtx.globalAlpha = p;
+      targetCtx.translate(w/2, h/2);
+      targetCtx.rotate(-(1 - p) * Math.PI);
+      const sB = 0.4 + p * 0.6;
+      targetCtx.scale(sB, sB);
+      targetCtx.drawImage(tB, -w/2, -h/2);
+      break;
+    }
+
+    case 'blur':
+      targetCtx.globalAlpha = 1 - p;
+      targetCtx.filter = `blur(${p * 14}px)`;
+      targetCtx.drawImage(tA, 0, 0);
+      targetCtx.globalAlpha = p;
+      targetCtx.filter = `blur(${(1 - p) * 14}px)`;
+      targetCtx.drawImage(tB, 0, 0);
+      targetCtx.filter = 'none';
+      break;
+
+    case 'glitch': {
+      targetCtx.globalAlpha = 1 - p;
+      targetCtx.drawImage(tA, 0, 0);
+      targetCtx.globalAlpha = p;
+      targetCtx.drawImage(tB, 0, 0);
+      targetCtx.globalAlpha = 1;
+      const intensity = 1 - Math.abs(p - 0.5) * 2;
+      const bands = 4 + Math.floor(intensity * 12);
+      for (let i = 0; i < bands; i++){
+        const y = Math.random() * h;
+        const bandH = 3 + Math.random() * 22;
+        const shift = (Math.random() - 0.5) * 90 * intensity;
+        const src = Math.random() > 0.5 ? tA : tB;
+        try {
+          targetCtx.drawImage(src, 0, y, w, bandH, shift, y, w, bandH);
+        } catch(err){}
+      }
+      break;
+    }
+
+    case 'mosaic': {
+      targetCtx.drawImage(tA, 0, 0);
+      const blockSize = 40;
+      const cols = Math.ceil(w / blockSize);
+      const rows = Math.ceil(h / blockSize);
+      for (let r = 0; r < rows; r++){
+        for (let cI = 0; cI < cols; cI++){
+          const seed = hash(r * 137 + cI * 43);
+          if (seed < p){
+            targetCtx.drawImage(
+              tB,
+              cI * blockSize, r * blockSize, blockSize, blockSize,
+              cI * blockSize, r * blockSize, blockSize, blockSize
+            );
+          }
+        }
+      }
+      break;
+    }
+
+    default:
+      targetCtx.drawImage(tB, 0, 0);
+  }
+
+  targetCtx.restore();
+}
+
+/* Render a single track (0=video, 1=text, 2=audio) at time t */
+function renderTrack(t, trackNum){
+  // Find the primary clip on this track
+  const primary = state.clips.find(c =>
+    c.track === trackNum && t >= c.start && t < c.start + c.dur);
+  if (!primary) return;
+
+  const local = t - primary.start;
+  const transIn = primary.transIn || { type: 'none', dur: 0 };
+  const inTransition = transIn.type !== 'none' && transIn.dur > 0 && local < transIn.dur;
+
+  if (inTransition){
+    const prev = getPrevAdjacentClip(primary);
+    if (prev){
+      // Previous clip's extended local time = its dur + current offset
+      const prevLocal = prev.dur + local;
+      tmpACtx.setTransform(1,0,0,1,0,0);
+      tmpBCtx.setTransform(1,0,0,1,0,0);
+      tmpACtx.clearRect(0, 0, W, H);
+      tmpBCtx.clearRect(0, 0, W, H);
+      renderClipTo(tmpACtx, prev, prevLocal);
+      renderClipTo(tmpBCtx, primary, local);
+      const progress = local / transIn.dur;
+      drawTransition(ctx, tmpACanvas, tmpBCanvas, transIn.type, progress);
+      return;
+    }
+  }
+
+  // No transition — render normally
+  renderClipTo(ctx, primary, local);
+}
+
 function renderPreview(t){
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
-  const visuals = state.clips
-    .filter(c => c.kind === 'media' && c.track === 0 && t >= c.start && t < c.start + c.dur)
-    .sort((a, b) => a.start - b.start);
-  visuals.forEach(c => {
-    const m = getMedia(c); if (!m) return;
-    if (c.effects && c.effects.length) drawSourceWithFx(m.el, m.w, m.h, c, t - c.start);
-    else {
-      ctx.globalAlpha = fadeAlpha(c, t - c.start);
-      const scale = Math.min(W / m.w, H / m.h);
-      const dw = m.w * scale, dh = m.h * scale;
-      try { ctx.drawImage(m.el, (W - dw) / 2, (H - dh) / 2, dw, dh); } catch(e){}
-      ctx.globalAlpha = 1;
-    }
-  });
-  ctx.globalAlpha = 1;
-  state.clips
-    .filter(c => c.kind === 'text' && t >= c.start && t < c.start + c.dur)
-    .forEach(c => {
-      if (c.effects && c.effects.length){
-        const tc = renderTextToCanvas(c);
-        drawSourceWithFx(tc, W, H, c, t - c.start);
-      } else {
-        const size = c.fontSize || 64;
-        ctx.save();
-        ctx.globalAlpha = fadeAlpha(c, t - c.start);
-        ctx.textAlign = c.align || 'center';
-        ctx.textBaseline = 'middle';
-        const x = W * (c.x ?? 50) / 100;
-        const y = H * (c.y ?? 50) / 100;
-        ctx.font = `800 ${size}px Inter, system-ui, sans-serif`;
-        const lines = wrapLinesForCtx(ctx, c.text || '', W * 0.88);
-        const lh = size * 1.18;
-        const top = y - (lines.length - 1) * lh / 2;
-        lines.forEach((ln, i) => {
-          ctx.lineWidth = Math.max(3, size / 11);
-          ctx.strokeStyle = 'rgba(0,0,0,.8)';
-          ctx.lineJoin = 'round';
-          ctx.strokeText(ln, x, top + i * lh);
-          ctx.fillStyle = c.color || '#fff';
-          ctx.fillText(ln, x, top + i * lh);
-        });
-        ctx.restore();
-      }
-    });
+
+  // Track 0 = video/images/drawings, Track 1 = text overlays
+  renderTrack(t, 0);
+  renderTrack(t, 1);
 }
 
 /* =========================================================
@@ -1570,10 +1960,9 @@ function loop(ts){
 requestAnimationFrame(loop);
 
 /* =========================================================
-   12. EXPORT (WebM + MP4)
+   12. EXPORT
    ========================================================= */
 let pendingFormat = 'mp4';
-
 $('#exportBtn').onclick = () => {
   if (!totalDuration()){ alert('Add some clips to the timeline first.'); return; }
   $('#exportModal').classList.remove('hidden');
@@ -1581,10 +1970,7 @@ $('#exportBtn').onclick = () => {
   $('#exportProgress').classList.remove('show');
   $$('.fmtOption').forEach(o => o.classList.toggle('selected', o.dataset.fmt === pendingFormat));
 };
-$('#closeExport').onclick = () => {
-  if (state.exporting) return;
-  $('#exportModal').classList.add('hidden');
-};
+$('#closeExport').onclick = () => { if (state.exporting) return; $('#exportModal').classList.add('hidden'); };
 $$('.fmtOption').forEach(o => {
   o.onclick = () => {
     pendingFormat = o.dataset.fmt;
@@ -1601,15 +1987,11 @@ $('#startExport').onclick = () => {
 $('#closeResult').onclick = () => $('#resultModal').classList.add('hidden');
 $('#resultClose2').onclick = () => $('#resultModal').classList.add('hidden');
 
-/* ---- Shared recording step ---- */
 async function recordTimeline(onProgress){
   return new Promise(async (resolve, reject) => {
     const dur = totalDuration();
     if (dur < 0.2){ reject(new Error('Timeline is empty.')); return; }
-
     ensureAudio(); setPlaying(false); setPlayhead(0);
-
-    // Park every media at its in-point
     state.clips.forEach(c => {
       if (c.kind !== 'media') return;
       const m = getMedia(c);
@@ -1617,24 +1999,18 @@ async function recordTimeline(onProgress){
       try { m.el.currentTime = c.in || 0; } catch(e){}
     });
     await new Promise(r => setTimeout(r, 500));
-
-    // Build stream
     const canvasStream = canvas.captureStream(30);
     const videoTracks = canvasStream.getVideoTracks();
-
     const hasAudio = state.clips.some(c => {
       if (c.kind !== 'media') return false;
       const m = getMedia(c);
       return m && (m.type === 'video' || m.type === 'audio');
     });
-
     const tracks = [...videoTracks];
     if (hasAudio && streamDest && streamDest.stream.getAudioTracks().length){
       tracks.push(...streamDest.stream.getAudioTracks());
     }
     const outStream = new MediaStream(tracks);
-
-    // Prefer VP8 for max compatibility
     const candidates = [
       'video/webm;codecs=vp8,opus',
       'video/webm;codecs=vp8',
@@ -1642,13 +2018,11 @@ async function recordTimeline(onProgress){
       'video/webm'
     ];
     const mimeType = candidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
-
     let rec;
     try{
       rec = new MediaRecorder(outStream, { mimeType,
         videoBitsPerSecond: 6_000_000, audioBitsPerSecond: 128_000 });
     } catch(e){ reject(e); return; }
-
     const chunks = [];
     rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     rec.onstop = () => {
@@ -1656,13 +2030,11 @@ async function recordTimeline(onProgress){
       const blob = new Blob(chunks, { type: 'video/webm' });
       resolve(blob);
     };
-
     if (masterGain) masterGain.gain.value = 0;
     rec.start(200);
     await new Promise(r => setTimeout(r, 200));
     setPlayhead(0);
     setPlaying(true);
-
     const deadline = performance.now() + dur * 1000 + 20000;
     const monitor = () => {
       const pct = Math.min(99, Math.round((state.playhead / dur) * 100));
@@ -1680,14 +2052,11 @@ async function recordTimeline(onProgress){
   });
 }
 
-/* ---- WebM export (fast path) ---- */
 async function exportVideoWebM(){
   if (state.exporting) return;
   state.exporting = true;
   const btn = $('#exportBtn');
   btn.disabled = true;
-
-  // Reset progress UI
   $('#epStep1').className = 'epStep active';
   $('#epStep1Pct').textContent = '0%';
   $('#epBar1').style.width = '0%';
@@ -1696,19 +2065,16 @@ async function exportVideoWebM(){
   $('#epStep3').style.display = 'none';
   $('#epBar3Wrap').style.display = 'none';
   $('#epHint').textContent = 'Recording your timeline…';
-
   try{
     const blob = await recordTimeline(pct => {
       $('#epStep1Pct').textContent = pct + '%';
       $('#epBar1').style.width = pct + '%';
     });
     if (masterGain) masterGain.gain.value = 1;
-
     $('#epStep1').className = 'epStep done';
     $('#epBar1').style.width = '100%';
     $('#epHint').textContent = 'Done!';
     $('#exportModal').classList.add('hidden');
-
     showResult(blob, 'webm');
   } catch(err){
     if (masterGain) masterGain.gain.value = 1;
@@ -1720,10 +2086,8 @@ async function exportVideoWebM(){
   }
 }
 
-/* ---- MP4 export (record → ffmpeg.wasm) ---- */
 let ffmpegInstance = null;
 let ffmpegLoading = false;
-
 async function loadFFmpeg(onProgress){
   if (ffmpegInstance && ffmpegInstance.loaded) return ffmpegInstance;
   if (ffmpegLoading){
@@ -1731,10 +2095,8 @@ async function loadFFmpeg(onProgress){
     return ffmpegInstance;
   }
   ffmpegLoading = true;
-
   try{
     if (!window.FFmpegLib){
-      // Load UMD build of @ffmpeg/ffmpeg v0.11.6 (stable, single-script)
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js';
@@ -1744,7 +2106,6 @@ async function loadFFmpeg(onProgress){
       });
       window.FFmpegLib = window.FFmpeg;
     }
-
     const { createFFmpeg } = window.FFmpegLib;
     const ffmpeg = createFFmpeg({
       log: false,
@@ -1753,7 +2114,6 @@ async function loadFFmpeg(onProgress){
         if (ratio >= 0 && ratio <= 1 && onProgress) onProgress(Math.round(ratio * 100));
       }
     });
-
     onProgress && onProgress(5);
     await ffmpeg.load();
     ffmpeg.loaded = true;
@@ -1769,8 +2129,6 @@ async function exportVideoMP4(){
   state.exporting = true;
   const btn = $('#exportBtn');
   btn.disabled = true;
-
-  // Reset progress UI
   $('#epStep1').className = 'epStep active';
   $('#epStep1Pct').textContent = '0%';
   $('#epBar1').style.width = '0%';
@@ -1779,9 +2137,7 @@ async function exportVideoMP4(){
   $('#epStep3').style.display = 'none';
   $('#epBar3Wrap').style.display = 'none';
   $('#epHint').textContent = 'Step 1 of 3: recording your timeline…';
-
   try{
-    // ---- Step 1: Record to WebM ----
     const webmBlob = await recordTimeline(pct => {
       $('#epStep1Pct').textContent = pct + '%';
       $('#epBar1').style.width = pct + '%';
@@ -1789,37 +2145,26 @@ async function exportVideoMP4(){
     if (masterGain) masterGain.gain.value = 1;
     $('#epStep1').className = 'epStep done';
     $('#epBar1').style.width = '100%';
-
-    // ---- Step 2: Load ffmpeg ----
     $('#epStep2').style.display = 'flex';
     $('#epBar2Wrap').style.display = 'block';
     $('#epStep2').className = 'epStep active';
     $('#epHint').textContent = 'Step 2 of 3: loading MP4 encoder (first time only — ~30 MB)…';
-
-    let lastPct = 0;
     await loadFFmpeg(pct => {
-      lastPct = pct;
       $('#epStep2Pct').textContent = pct + '%';
       $('#epBar2').style.width = Math.min(100, pct * 2) + '%';
     });
     $('#epStep2').className = 'epStep done';
     $('#epBar2').style.width = '100%';
     $('#epStep2Pct').textContent = '100%';
-
-    // ---- Step 3: Convert WebM → MP4 ----
     $('#epStep3').style.display = 'flex';
     $('#epBar3Wrap').style.display = 'block';
     $('#epStep3').className = 'epStep active';
     $('#epHint').textContent = 'Step 3 of 3: converting to MP4…';
-
     const ffmpeg = ffmpegInstance;
     const { fetchFile } = window.FFmpegLib;
-
     const inName = 'input.webm';
     const outName = 'output.mp4';
-
     ffmpeg.FS('writeFile', inName, await fetchFile(webmBlob));
-
     await ffmpeg.run(
       '-i', inName,
       '-c:v', 'libx264',
@@ -1831,28 +2176,22 @@ async function exportVideoMP4(){
       '-movflags', '+faststart',
       outName
     );
-
     $('#epBar3').style.width = '100%';
     $('#epStep3Pct').textContent = '100%';
     $('#epStep3').className = 'epStep done';
-
     const data = ffmpeg.FS('readFile', outName);
     const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
-
-    // Clean up files from memory
     try { ffmpeg.FS('unlink', inName); } catch(e){}
     try { ffmpeg.FS('unlink', outName); } catch(e){}
-
     $('#epHint').textContent = 'Done!';
     $('#exportModal').classList.add('hidden');
-
     showResult(mp4Blob, 'mp4');
   } catch(err){
     console.error('MP4 export failed:', err);
     if (masterGain) masterGain.gain.value = 1;
     alert('MP4 export failed: ' + (err.message || err) +
           '\n\nTip: this needs an internet connection the first time to download the encoder. ' +
-          'If it keeps failing, use WebM instead — it works offline and plays in VLC/Chrome.');
+          'If it keeps failing, use WebM instead.');
     $('#exportModal').classList.add('hidden');
   } finally {
     state.exporting = false;
@@ -1860,36 +2199,28 @@ async function exportVideoMP4(){
   }
 }
 
-/* ---- Result modal with preview + download ---- */
 function showResult(blob, format){
   const url = URL.createObjectURL(blob);
   const sizeMB = (blob.size / 1024 / 1024).toFixed(1);
   const ext = format === 'mp4' ? 'mp4' : 'webm';
   const filename = 'video-editor-export.' + ext;
-
   $('#resultTitle').textContent = format === 'mp4'
     ? '✅ MP4 ready (plays everywhere)'
     : '✅ WebM ready (fast format)';
-
   const info = $('#resultInfo');
   info.innerHTML = `Size: <b>${sizeMB} MB</b> · Format: <b>${ext.toUpperCase()}</b><br>` +
     (format === 'mp4'
       ? 'Works on iPhone, Android, Windows Media Player, QuickTime, TVs, and every social platform.'
-      : 'Plays in VLC, Chrome, Edge, Firefox, and Windows Movies & TV. Not supported on iPhone or QuickTime.');
-
+      : 'Plays in VLC, Chrome, Edge, Firefox, and Windows Movies & TV.');
   const video = $('#resultVideo');
   video.src = url;
-
   $('#resultDownload').onclick = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
   };
-
   $('#resultModal').classList.remove('hidden');
-
-  // Auto-open the downloader once (feels like a save dialog)
   setTimeout(() => {
     const a = document.createElement('a');
     a.href = url;
@@ -1899,7 +2230,7 @@ function showResult(blob, format){
 }
 
 /* =========================================================
-   13. Properties
+   13. Properties panel (with transition section)
    ========================================================= */
 function effectRowHtml(e){
   const def = EFFECT_LOOKUP[e.type] || { label:e.type, icon:'✨' };
@@ -1934,6 +2265,60 @@ function bindFxRows(c){
     };
   });
 }
+
+function transitionSectionHtml(c){
+  const prev = getPrevAdjacentClip(c);
+  const current = c.transIn || { type:'none', dur: 0.5 };
+  const currentDef = TRANS_LOOKUP[current.type] || TRANS_LOOKUP.none;
+  const hasPrev = !!prev;
+
+  let prevInfo = '';
+  if (hasPrev){
+    const pm = prev.kind === 'media' ? getMedia(prev) : null;
+    const prevName = prev.kind === 'text'
+      ? `Text "${(prev.text || '').slice(0,20)}"`
+      : (pm ? pm.name.slice(0, 24) : 'clip');
+    prevInfo = `<div class="muted" style="font-size:10px;margin-bottom:8px">
+      Previous: <b>${esc(prevName)}</b></div>`;
+  } else {
+    prevInfo = `<div class="noPrev">⚠ No clip ends exactly where this one starts.<br>
+      Move or trim so the previous clip touches this clip's start to enable the transition.</div>`;
+  }
+
+  return `<div class="transitionSection">
+    <h4>🎬 Transition In</h4>
+    ${prevInfo}
+    <label>Type</label>
+    <select id="pTrans" ${hasPrev ? '' : 'disabled'}>
+      ${TRANSITIONS.map(t => `<option value="${t.type}" ${current.type === t.type ? 'selected' : ''}>${t.icon} ${t.label}</option>`).join('')}
+    </select>
+    <label>Duration <span id="pTransDurVal">${(current.dur || 0.5).toFixed(1)}s</span></label>
+    <input type="range" id="pTransDur" min="0.1" max="3" step="0.1"
+           value="${current.dur || 0.5}" ${hasPrev && current.type !== 'none' ? '' : 'disabled'}>
+  </div>`;
+}
+
+function bindTransitionRows(c){
+  const sel = $('#pTrans');
+  const dur = $('#pTransDur');
+  if (sel){
+    sel.onchange = e => {
+      if (!c.transIn) c.transIn = { type:'none', dur: 0.5 };
+      c.transIn.type = e.target.value;
+      renderTimeline(); renderProps(); renderTransGrid();
+    };
+  }
+  if (dur){
+    dur.oninput = e => {
+      if (!c.transIn) c.transIn = { type:'none', dur: 0.5 };
+      c.transIn.dur = +e.target.value;
+      const lbl = $('#pTransDurVal');
+      if (lbl) lbl.textContent = c.transIn.dur.toFixed(1) + 's';
+      renderTimeline();
+    };
+  }
+}
+
 function renderProps(){
   const box = $('#props');
   const c = state.clips.find(x => x.id === state.sel);
@@ -1961,6 +2346,7 @@ function renderProps(){
         <div><label>Fade out</label><input type="number" id="pFo" step="0.1" min="0" value="${c.fadeOut||0}"></div>
       </div>
       ${effectsSectionHtml(c)}
+      ${transitionSectionHtml(c)}
       <div class="infoLine">Start ${fmt(c.start)} · Duration ${fmt(c.dur)} · Ends ${fmt(c.start + c.dur)}</div>`;
     $('#pText').oninput = e => { c.text = e.target.value; renderTimeline(); };
     $('#pSize').oninput = e => { c.fontSize = +e.target.value; $('#pSizeVal').textContent = c.fontSize; };
@@ -1971,6 +2357,7 @@ function renderProps(){
     $('#pFi').oninput = e => { c.fadeIn = Math.max(0, +e.target.value); };
     $('#pFo').oninput = e => { c.fadeOut = Math.max(0, +e.target.value); };
     bindFxRows(c);
+    bindTransitionRows(c);
     return;
   }
   const m = getMedia(c);
@@ -1996,6 +2383,7 @@ function renderProps(){
       <div><label>Fade out</label><input type="number" id="pFo" step="0.1" min="0" value="${c.fadeOut || 0}"></div>
     </div>
     ${effectsSectionHtml(c)}
+    ${transitionSectionHtml(c)}
     <div class="infoLine">
       Starts ${fmt(c.start)} · Ends ${fmt(c.start + c.dur)}<br>
       Source in ${((c.in || 0)).toFixed(2)}s → ${(((c.in || 0)) + c.dur).toFixed(2)}s
@@ -2016,6 +2404,7 @@ function renderProps(){
   $('#pFi').oninput = e => { c.fadeIn = Math.max(0, +e.target.value); };
   $('#pFo').oninput = e => { c.fadeOut = Math.max(0, +e.target.value); };
   bindFxRows(c);
+  bindTransitionRows(c);
 }
 
 /* =========================================================
@@ -2174,7 +2563,7 @@ window.addEventListener('keydown', e => {
    ========================================================= */
 function switchTab(name){
   $$('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
-  ['media','text','draw','fx','ai'].forEach(t => {
+  ['media','text','draw','fx','trans','ai'].forEach(t => {
     const pane = document.getElementById('tab-' + t);
     if (pane) pane.classList.toggle('hidden', t !== name);
   });
@@ -2193,7 +2582,6 @@ const STOP_WORDS = new Set(['the','a','an','and','or','of','to','in','on','for',
 async function smartSearch(query){
   const result = { title: query, summary: '', url: null, keywords: [], related: [], images: [] };
   if (!query || query.trim().length < 2) return result;
-
   let bestTitle = null;
   try {
     const url = 'https://en.wikipedia.org/w/api.php?' + new URLSearchParams({
@@ -2209,7 +2597,6 @@ async function smartSearch(query){
       result.title = bestTitle;
     }
   } catch(e){ console.warn('search step1', e); }
-
   if (bestTitle){
     try {
       const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' +
@@ -2221,14 +2608,12 @@ async function smartSearch(query){
       }
     } catch(e){ console.warn('search step2', e); }
   }
-
   const text = (result.title + ' ' + result.summary + ' ' + query).toLowerCase();
   const words = text.match(/[a-z][a-z\-']{3,}/g) || [];
   const freq = {};
   words.forEach(w => { if (!STOP_WORDS.has(w)) freq[w] = (freq[w] || 0) + 1; });
   result.keywords = Object.entries(freq)
     .sort((a, b) => b[1] - a[1]).slice(0, 14).map(x => x[0]);
-
   try {
     const url = 'https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
       action: 'query', generator: 'search',
@@ -2254,7 +2639,6 @@ async function smartSearch(query){
       if (result.images.length >= 9) break;
     }
   } catch(e){ console.warn('search step3', e); }
-
   return result;
 }
 
@@ -2270,7 +2654,6 @@ function renderSearchPanel(data){
   }
   panel.classList.add('show');
   count.textContent = `${data.images.length} img · ${data.related.length} pages`;
-
   let html = '';
   html += `<div class="srTitle">📖 ${esc(data.title)}`;
   if (data.url) html += ` <a href="${esc(data.url)}" target="_blank" rel="noopener">↗</a>`;
@@ -2301,7 +2684,6 @@ function renderSearchPanel(data){
         `<span class="srRelatedChip" data-title="${esc(r)}">${esc(r)}</span>`).join('') + `</div>`;
   }
   body.innerHTML = html;
-
   $$('#srImagesGrid .srImgWrap').forEach(wrap => {
     wrap.onclick = () => {
       const img = data.images[+wrap.dataset.i];
@@ -2353,7 +2735,7 @@ async function importWikimediaImage(img){
 }
 
 /* =========================================================
-   18. AI scene rendering (compact — same as before)
+   18. AI scene rendering
    ========================================================= */
 function detectScene(prompt, ctx2){
   const extra = ctx2 ? (ctx2.keywords || []).join(' ') + ' ' + (ctx2.title || '') + ' ' + (ctx2.summary || '') : '';
@@ -2842,7 +3224,6 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx2){
   else if (mood === 'storm'){ sc.storm = true; sc.night = false; sc.snow = false; sc.sunset = false; sc.aurora = false; }
   else if (mood === 'snow'){ sc.snow = true; sc.night = false; sc.sunset = false; sc.storm = false; sc.aurora = false; }
   else if (mood === 'space'){ sc.space = true; sc.night = true; sc.aurora = false; }
-
   const horizonY = H * 0.62;
   const groundY = H * 0.72;
   drawSky(cx, W, H, sc, t);
@@ -2974,7 +3355,7 @@ function renderAIScene(cx, W, H, prompt, t, mood, ctx2){
   cx.fillRect(0, 0, W, H);
 }
 
-/* ---- AI text ---- */
+/* ---- Text generator ---- */
 const AI_WORDS = {
   cinematic: {
     open:['In the fading light','Beyond the veil of silence','When the world went quiet',
